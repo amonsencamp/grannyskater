@@ -136,7 +136,7 @@ const y = Math.floor((HEIGHT - 222) / 2 - 10);
        ctx.font = "7px Pixel";
         ctx.fillText(
             "PRESS BUTTON TO START",
-            150,
+            50,
             250
         );
     }
