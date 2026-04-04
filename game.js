@@ -10,8 +10,8 @@ ctx.msImageSmoothingEnabled = false;
 const bitmapFont = {
     image: images.font,    // we’ll load it below
     chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
-    charWidth: 27,
-    charHeight: 33
+    charWidth: 8,
+    charHeight:10
 };
 
 const WIDTH = 400;
