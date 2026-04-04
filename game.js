@@ -137,7 +137,7 @@ function update(delta) {
         if (cloudsLayer.x <= -cloudsLayer.image.width) cloudsLayer.x += cloudsLayer.image.width;
 
         // Distant buildings
-        distantBuildings.forEach(bld => bld.x -= speed * 0.3);
+        distantBuildings.forEach(bld => bld.x -= speed * 0.2);
         let firstDist = distantBuildings[0];
         if (firstDist.x + firstDist.image.width < 0) {
             distantBuildings.shift();
@@ -148,7 +148,7 @@ function update(delta) {
         }
 
         // Foreground buildings
-        foregroundBuildings.forEach(bld => bld.x -= speed * 0.5);
+        foregroundBuildings.forEach(bld => bld.x -= speed * 0.4);
         let firstFore = foregroundBuildings[0];
         if (firstFore.x + firstFore.image.width < 0) {
             foregroundBuildings.shift();
