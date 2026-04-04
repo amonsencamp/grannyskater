@@ -133,7 +133,7 @@ const y = Math.floor((HEIGHT - 222) / 2 - 10);
     // blinking text
     if (showBlink) {
         ctx.fillStyle = "white";
-       ctx.font = "7px Pixel";
+       ctx.font = "8px Pixel";
         ctx.fillText(
             "PRESS BUTTON TO START",
             50,
