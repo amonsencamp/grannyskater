@@ -148,7 +148,7 @@ function update(delta) {
         }
 
         // Foreground buildings
-        foregroundBuildings.forEach(bld => bld.x -= speed * 0.4);
+        foregroundBuildings.forEach(bld => bld.x -= speed * 0.8);
         let firstFore = foregroundBuildings[0];
         if (firstFore.x + firstFore.image.width < 0) {
             foregroundBuildings.shift();
