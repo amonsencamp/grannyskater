@@ -4,25 +4,21 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Disable smoothing for crisp pixels
+// Disable smoothing for pixel art
 ctx.imageSmoothingEnabled = false;
 ctx.webkitImageSmoothingEnabled = false;
 ctx.mozImageSmoothingEnabled = false;
 ctx.msImageSmoothingEnabled = false;
 
-// Canvas dimensions
+// Canvas size
 const WIDTH = 400;
 const HEIGHT = 300;
 
 // Game states
-const STATE = {
-    TITLE: 0,
-    PLAYING: 1,
-    GAMEOVER: 2
-};
+const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
 let gameState = STATE.TITLE;
 
-// Timing for blinking text
+// Blink timer for title screen
 let lastTime = 0;
 let blinkTimer = 0;
 let showBlink = true;
@@ -33,14 +29,14 @@ let speed = 2;
 // Images container
 const images = {};
 
-// Bitmap font settings (no direct reference to images yet)
+// Bitmap font
 const bitmapFont = {
     chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
-    charWidth: 8,  // adjust to match your font.png
-    charHeight: 10
+    charWidth: 27,
+    charHeight: 33
 };
 
-// Granny setup
+// Granny
 const granny = {
     x: 30,
     y: HEIGHT - 30 - 150,
@@ -48,30 +44,33 @@ const granny = {
     height: 150
 };
 
-// Input handling
+// Input
 let buttonPressed = false;
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
         buttonPressed = true;
-
         if (gameState === STATE.TITLE) startGame();
     }
 });
-
 window.addEventListener("keyup", (e) => {
     if (e.code === "Space") buttonPressed = false;
 });
 
-// Preload all images
+// ====== Preload images ======
+const fgBuildingFiles = ["fg_building1.png","fg_building2.png","fg_building3.png","fg_building4.png","fg_building5.png"];
+const bgBuildingFiles = ["bg_building1.png","bg_building2.png","bg_building3.png","bg_building4.png","bg_building5.png"];
 const imagesToLoad = [
     { name: "title", src: "assets/titlescreen.png" },
     { name: "granny", src: "assets/granny.png" },
-    { name: "bg1", src: "assets/bglayer1.png" },
-    { name: "bg2", src: "assets/bglayer2.png" },
     { name: "clouds", src: "assets/clouds.png" },
     { name: "font", src: "assets/font.png" }
 ];
 
+// Add foreground and background buildings
+fgBuildingFiles.forEach((f, i) => imagesToLoad.push({ name: "fg" + (i+1), src: "assets/" + f }));
+bgBuildingFiles.forEach((f, i) => imagesToLoad.push({ name: "bg" + (i+1), src: "assets/" + f }));
+
+// Preload all images
 let loadedCount = 0;
 imagesToLoad.forEach(imgData => {
     const img = new Image();
@@ -79,18 +78,44 @@ imagesToLoad.forEach(imgData => {
     img.onload = () => {
         loadedCount++;
         if (loadedCount === imagesToLoad.length) {
-            requestAnimationFrame(loop); // start loop only when all images are loaded
+            initLayers();
+            requestAnimationFrame(loop);
         }
     };
     images[imgData.name] = img;
 });
 
-// Start the game
-function startGame() {
-    gameState = STATE.PLAYING;
+// ====== Background layers ======
+let cloudsLayer = { image: null, x: 0, y: 20, speedMult: 0.05 };
+let distantBuildings = [];
+let foregroundBuildings = [];
+
+function initLayers() {
+    cloudsLayer.image = images.clouds;
+
+    // Distant buildings (bg layer)
+    let xPos = 0;
+    while (xPos < WIDTH + 200) {
+        const index = Math.floor(Math.random() * bgBuildingFiles.length) + 1;
+        const img = images["bg" + index];
+        distantBuildings.push({ image: img, x: xPos, y: HEIGHT - 50 - img.height - 40 });
+        xPos += img.width;
+    }
+
+    // Foreground buildings (fg layer)
+    xPos = 0;
+    while (xPos < WIDTH + 200) {
+        const index = Math.floor(Math.random() * fgBuildingFiles.length) + 1;
+        const img = images["fg" + index];
+        foregroundBuildings.push({ image: img, x: xPos, y: HEIGHT - 50 - img.height });
+        xPos += img.width;
+    }
 }
 
-// Main game loop
+// ====== Start game ======
+function startGame() { gameState = STATE.PLAYING; }
+
+// ====== Main loop ======
 function loop(timestamp) {
     const delta = timestamp - lastTime;
     lastTime = timestamp;
@@ -101,37 +126,56 @@ function loop(timestamp) {
     requestAnimationFrame(loop);
 }
 
-// Update function
+// ====== Update ======
 function update(delta) {
-    // Blink timer for title text
     blinkTimer += delta;
-    if (blinkTimer > 400) {
-        blinkTimer = 0;
-        showBlink = !showBlink;
-    }
+    if (blinkTimer > 400) { blinkTimer = 0; showBlink = !showBlink; }
 
     if (gameState === STATE.PLAYING) {
-        // TODO: implement gameplay updates
+        // Clouds
+        cloudsLayer.x -= speed * cloudsLayer.speedMult;
+        if (cloudsLayer.x <= -cloudsLayer.image.width) cloudsLayer.x += cloudsLayer.image.width;
+
+        // Distant buildings
+        distantBuildings.forEach(bld => bld.x -= speed * 0.3);
+        let firstDist = distantBuildings[0];
+        if (firstDist.x + firstDist.image.width < 0) {
+            distantBuildings.shift();
+            const idx = Math.floor(Math.random() * bgBuildingFiles.length) + 1;
+            const img = images["bg" + idx];
+            const lastBld = distantBuildings[distantBuildings.length - 1];
+            distantBuildings.push({ image: img, x: lastBld.x + lastBld.image.width, y: HEIGHT - 50 - img.height - 40 });
+        }
+
+        // Foreground buildings
+        foregroundBuildings.forEach(bld => bld.x -= speed * 0.5);
+        let firstFore = foregroundBuildings[0];
+        if (firstFore.x + firstFore.image.width < 0) {
+            foregroundBuildings.shift();
+            const idx = Math.floor(Math.random() * fgBuildingFiles.length) + 1;
+            const img = images["fg" + idx];
+            const lastBld = foregroundBuildings[foregroundBuildings.length - 1];
+            foregroundBuildings.push({ image: img, x: lastBld.x + lastBld.image.width, y: HEIGHT - 50 - img.height });
+        }
     }
 }
 
-// Draw function
+// ====== Draw ======
 function draw() {
-    // Sky background
+    // Sky
     ctx.fillStyle = "#8dc2e3";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // Draw depending on game state
     if (gameState === STATE.TITLE) drawTitle();
     if (gameState === STATE.PLAYING) drawGame();
 }
 
-// Draw bitmap font text
+// ====== Bitmap font ======
 function drawBitmapText(text, x, y) {
     text = text.toUpperCase();
+    if (!images.font.complete) return;
 
-    if (!images.font || !images.font.complete) return;
-
+    const spacing = 1;
     for (let i = 0; i < text.length; i++) {
         const ch = text[i];
         const index = bitmapFont.chars.indexOf(ch);
@@ -142,40 +186,39 @@ function drawBitmapText(text, x, y) {
         const sw = bitmapFont.charWidth;
         const sh = bitmapFont.charHeight;
 
-        ctx.drawImage(
-            images.font,
-            sx, sy, sw, sh,
-            x + i * bitmapFont.charWidth + 1,
-            y,
-            sw, sh
-        );
+        ctx.drawImage(images.font, sx, sy, sw, sh, x + i*(sw + spacing), y, sw, sh);
     }
 }
 
-// Draw the title screen
+// ====== Title screen ======
 function drawTitle() {
-    // Black background
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // Draw title image
     const img = images.title;
     if (img.complete) {
-        const x = Math.floor((WIDTH - 363) / 2);
-        const y = Math.floor((HEIGHT - 222) / 2 - 10);
+        const x = Math.floor((WIDTH - 363)/2);
+        const y = Math.floor((HEIGHT - 222)/2 - 10);
         ctx.drawImage(img, x, y);
     }
 
-    // Blinking "PRESS BUTTON TO START" text
     if (showBlink && images.font.complete) {
-        drawBitmapText("PRESS BUTTON TO START", 20, 250); // left-aligned
+        drawBitmapText("PRESS BUTTON TO START", 20, 250);
     }
 }
 
-// Draw game placeholder
+// ====== Game ======
 let lineOffset = 0;
 function drawGame() {
-    // TODO: implement scrolling clouds, parallax layers, obstacles
+    // Clouds
+    ctx.drawImage(cloudsLayer.image, cloudsLayer.x, cloudsLayer.y);
+    ctx.drawImage(cloudsLayer.image, cloudsLayer.x + cloudsLayer.image.width, cloudsLayer.y);
+
+    // Distant buildings
+    distantBuildings.forEach(bld => ctx.drawImage(bld.image, bld.x, bld.y));
+
+    // Foreground buildings
+    foregroundBuildings.forEach(bld => ctx.drawImage(bld.image, bld.x, bld.y));
 
     // Street
     ctx.fillStyle = "#867e7c";
@@ -184,22 +227,17 @@ function drawGame() {
     // Dashed line
     drawRoadLine();
 
-    // Granny sprite
+    // Granny
     ctx.drawImage(images.granny, granny.x, granny.y);
 }
 
-// Draw dashed yellow line for street
+// ====== Dashed line ======
 function drawRoadLine() {
     lineOffset -= speed;
     if (lineOffset < -24) lineOffset = 0;
 
     ctx.fillStyle = "#fef752";
     for (let i = 0; i < WIDTH / 24 + 2; i++) {
-        ctx.fillRect(
-            i * 24 + lineOffset,
-            HEIGHT - 25,
-            12,
-            3
-        );
+        ctx.fillRect(i*24 + lineOffset, HEIGHT - 25, 12, 3);
     }
 }
