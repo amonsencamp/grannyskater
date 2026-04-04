@@ -86,7 +86,7 @@ imagesToLoad.forEach(imgData => {
 });
 
 // ====== Background layers ======
-let cloudsLayer = { image: null, x: 0, y: 20, speedMult: 0.05 };
+let cloudsLayer = { image: null, x: 0, y: 20, speedMult: 0 };
 let distantBuildings = [];
 let foregroundBuildings = [];
 
