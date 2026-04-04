@@ -1,14 +1,16 @@
 // ====== game.js ======
 
+// Canvas setup
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Disable smoothing for crisp pixel graphics
+// Disable smoothing for crisp pixels
 ctx.imageSmoothingEnabled = false;
 ctx.webkitImageSmoothingEnabled = false;
 ctx.mozImageSmoothingEnabled = false;
 ctx.msImageSmoothingEnabled = false;
 
+// Canvas dimensions
 const WIDTH = 400;
 const HEIGHT = 300;
 
@@ -20,7 +22,7 @@ const STATE = {
 };
 let gameState = STATE.TITLE;
 
-// Timing
+// Timing for blinking text
 let lastTime = 0;
 let blinkTimer = 0;
 let showBlink = true;
@@ -31,14 +33,14 @@ let speed = 2;
 // Images container
 const images = {};
 
-// Bitmap font settings (image loaded separately)
+// Bitmap font settings (no direct reference to images yet)
 const bitmapFont = {
     chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
-    charWidth: 8,  // adjust if your font.png is smaller/larger
+    charWidth: 8,  // adjust to match your font.png
     charHeight: 10
 };
 
-// Granny
+// Granny setup
 const granny = {
     x: 30,
     y: HEIGHT - 30 - 150,
@@ -46,7 +48,7 @@ const granny = {
     height: 150
 };
 
-// Input
+// Input handling
 let buttonPressed = false;
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
@@ -60,7 +62,7 @@ window.addEventListener("keyup", (e) => {
     if (e.code === "Space") buttonPressed = false;
 });
 
-// Preload images
+// Preload all images
 const imagesToLoad = [
     { name: "title", src: "assets/titlescreen.png" },
     { name: "granny", src: "assets/granny.png" },
@@ -77,18 +79,18 @@ imagesToLoad.forEach(imgData => {
     img.onload = () => {
         loadedCount++;
         if (loadedCount === imagesToLoad.length) {
-            requestAnimationFrame(loop); // start game loop only when all images loaded
+            requestAnimationFrame(loop); // start loop only when all images are loaded
         }
     };
     images[imgData.name] = img;
 });
 
-// Start game
+// Start the game
 function startGame() {
     gameState = STATE.PLAYING;
 }
 
-// Main loop
+// Main game loop
 function loop(timestamp) {
     const delta = timestamp - lastTime;
     lastTime = timestamp;
@@ -99,7 +101,7 @@ function loop(timestamp) {
     requestAnimationFrame(loop);
 }
 
-// Update
+// Update function
 function update(delta) {
     // Blink timer for title text
     blinkTimer += delta;
@@ -109,13 +111,13 @@ function update(delta) {
     }
 
     if (gameState === STATE.PLAYING) {
-        // TODO: gameplay update (scrolling layers, obstacles, etc.)
+        // TODO: implement gameplay updates
     }
 }
 
-// Draw
+// Draw function
 function draw() {
-    // Sky
+    // Sky background
     ctx.fillStyle = "#8dc2e3";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -124,7 +126,7 @@ function draw() {
     if (gameState === STATE.PLAYING) drawGame();
 }
 
-// Draw bitmap text (pixel-perfect)
+// Draw bitmap font text
 function drawBitmapText(text, x, y) {
     text = text.toUpperCase();
 
@@ -150,13 +152,13 @@ function drawBitmapText(text, x, y) {
     }
 }
 
-// Draw title screen
+// Draw the title screen
 function drawTitle() {
     // Black background
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // Title image
+    // Draw title image
     const img = images.title;
     if (img.complete) {
         const x = Math.floor((WIDTH - 363) / 2);
@@ -164,7 +166,7 @@ function drawTitle() {
         ctx.drawImage(img, x, y);
     }
 
-    // Blinking "PRESS BUTTON TO START"
+    // Blinking "PRESS BUTTON TO START" text
     if (showBlink && images.font.complete) {
         drawBitmapText("PRESS BUTTON TO START", 20, 250); // left-aligned
     }
@@ -173,7 +175,7 @@ function drawTitle() {
 // Draw game placeholder
 let lineOffset = 0;
 function drawGame() {
-    // Clouds, bg layers etc. will go here later
+    // TODO: implement scrolling clouds, parallax layers, obstacles
 
     // Street
     ctx.fillStyle = "#867e7c";
@@ -182,11 +184,11 @@ function drawGame() {
     // Dashed line
     drawRoadLine();
 
-    // Granny
+    // Granny sprite
     ctx.drawImage(images.granny, granny.x, granny.y);
 }
 
-// Draw dashed center line
+// Draw dashed yellow line for street
 function drawRoadLine() {
     lineOffset -= speed;
     if (lineOffset < -24) lineOffset = 0;
