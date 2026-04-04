@@ -6,6 +6,14 @@ ctx.webkitImageSmoothingEnabled = false;
 ctx.mozImageSmoothingEnabled = false;
 ctx.msImageSmoothingEnabled = false;
 
+// bitmap font settings
+const bitmapFont = {
+    image: images.font,    // we’ll load it below
+    chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
+    charWidth: 27,
+    charHeight: 33
+};
+
 const WIDTH = 400;
 const HEIGHT = 300;
 
@@ -38,6 +46,7 @@ loadImage("granny", "assets/granny.png");
 loadImage("bg1", "assets/bglayer1.png");
 loadImage("bg2", "assets/bglayer2.png");
 loadImage("clouds", "assets/clouds.png");
+loadImage("font", "assets/font.png");
 
 // Granny
 const granny = {
@@ -116,6 +125,28 @@ function draw() {
         drawGame();
     }
 }
+//Draw Bitmap text
+function drawBitmapText(text, x, y) {
+    text = text.toUpperCase(); // ensure matches font sheet
+
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const index = bitmapFont.chars.indexOf(ch);
+
+        if (index === -1) continue; // skip unknown chars
+
+        const sx = index * bitmapFont.charWidth;
+        const sy = 0; // single row font
+        const sw = bitmapFont.charWidth;
+        const sh = bitmapFont.charHeight;
+
+        ctx.drawImage(
+            bitmapFont.image,
+            sx, sy, sw, sh,          // source
+            x + i * bitmapFont.charWidth, y, sw, sh // destination
+        );
+    }
+}
 
 // Title screen
 function drawTitle() {
@@ -134,11 +165,7 @@ const y = Math.floor((HEIGHT - 222) / 2 - 10);
     if (showBlink) {
         ctx.fillStyle = "white";
        ctx.font = "8px Pixel";
-        ctx.fillText(
-            "PRESS BUTTON TO START",
-            50,
-            250
-        );
+        drawBitmapText("PRESS BUTTON TO START", 100, 250);
     }
 }
 
