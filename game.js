@@ -1,78 +1,86 @@
+// ====== game.js ======
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-ctx.imageSmoothingEnabled = false;
+
+// Disable smoothing for crisp pixel graphics
 ctx.imageSmoothingEnabled = false;
 ctx.webkitImageSmoothingEnabled = false;
 ctx.mozImageSmoothingEnabled = false;
 ctx.msImageSmoothingEnabled = false;
 
-// bitmap font settings
-const bitmapFont = {
-    image: images.font,    // we’ll load it below
-    chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
-    charWidth: 8,
-    charHeight:10
-};
-
 const WIDTH = 400;
 const HEIGHT = 300;
 
+// Game states
 const STATE = {
     TITLE: 0,
     PLAYING: 1,
     GAMEOVER: 2
 };
-
 let gameState = STATE.TITLE;
 
+// Timing
 let lastTime = 0;
 let blinkTimer = 0;
 let showBlink = true;
 
-// speed (will increase later)
+// Game speed
 let speed = 2;
 
-// Load images
+// Images container
 const images = {};
 
-function loadImage(name, src) {
-    const img = new Image();
-    img.src = src;
-    images[name] = img;
-}
-
-loadImage("title", "assets/titlescreen.png");
-loadImage("granny", "assets/granny.png");
-loadImage("bg1", "assets/bglayer1.png");
-loadImage("bg2", "assets/bglayer2.png");
-loadImage("clouds", "assets/clouds.png");
-loadImage("font", "assets/font.png");
+// Bitmap font settings (image loaded separately)
+const bitmapFont = {
+    chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
+    charWidth: 8,  // adjust if your font.png is smaller/larger
+    charHeight: 10
+};
 
 // Granny
 const granny = {
     x: 30,
-    y: HEIGHT - 30 - 150, // 30px from bottom
+    y: HEIGHT - 30 - 150,
     width: 114,
     height: 150
 };
 
 // Input
 let buttonPressed = false;
-
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
         buttonPressed = true;
 
-        if (gameState === STATE.TITLE) {
-            startGame();
-        }
+        if (gameState === STATE.TITLE) startGame();
     }
 });
 
 window.addEventListener("keyup", (e) => {
-    if (e.code === "Space") {
-        buttonPressed = false;
-    }
+    if (e.code === "Space") buttonPressed = false;
+});
+
+// Preload images
+const imagesToLoad = [
+    { name: "title", src: "assets/titlescreen.png" },
+    { name: "granny", src: "assets/granny.png" },
+    { name: "bg1", src: "assets/bglayer1.png" },
+    { name: "bg2", src: "assets/bglayer2.png" },
+    { name: "clouds", src: "assets/clouds.png" },
+    { name: "font", src: "assets/font.png" }
+];
+
+let loadedCount = 0;
+imagesToLoad.forEach(imgData => {
+    const img = new Image();
+    img.src = imgData.src;
+    img.onload = () => {
+        loadedCount++;
+        if (loadedCount === imagesToLoad.length) {
+            requestAnimationFrame(loop); // start game loop only when all images loaded
+        }
+    };
+    images[imgData.name] = img;
 });
 
 // Start game
@@ -82,7 +90,6 @@ function startGame() {
 
 // Main loop
 function loop(timestamp) {
-
     const delta = timestamp - lastTime;
     lastTime = timestamp;
 
@@ -92,46 +99,40 @@ function loop(timestamp) {
     requestAnimationFrame(loop);
 }
 
-requestAnimationFrame(loop);
-
 // Update
 function update(delta) {
-
-    // blink text
+    // Blink timer for title text
     blinkTimer += delta;
-
     if (blinkTimer > 400) {
         blinkTimer = 0;
         showBlink = !showBlink;
     }
 
     if (gameState === STATE.PLAYING) {
-        // gameplay update coming next
+        // TODO: gameplay update (scrolling layers, obstacles, etc.)
     }
 }
 
 // Draw
 function draw() {
-
-    // sky
+    // Sky
     ctx.fillStyle = "#8dc2e3";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    if (gameState === STATE.TITLE) {
-        drawTitle();
-    }
-
-    if (gameState === STATE.PLAYING) {
-        drawGame();
-    }
+    // Draw depending on game state
+    if (gameState === STATE.TITLE) drawTitle();
+    if (gameState === STATE.PLAYING) drawGame();
 }
+
+// Draw bitmap text (pixel-perfect)
 function drawBitmapText(text, x, y) {
     text = text.toUpperCase();
+
+    if (!images.font || !images.font.complete) return;
 
     for (let i = 0; i < text.length; i++) {
         const ch = text[i];
         const index = bitmapFont.chars.indexOf(ch);
-
         if (index === -1) continue;
 
         const sx = index * bitmapFont.charWidth;
@@ -140,19 +141,22 @@ function drawBitmapText(text, x, y) {
         const sh = bitmapFont.charHeight;
 
         ctx.drawImage(
-            images.font,           // <--- use images.font directly
+            images.font,
             sx, sy, sw, sh,
-            x + i * bitmapFont.charWidth, y, sw, sh
+            x + i * bitmapFont.charWidth,
+            y,
+            sw, sh
         );
     }
 }
 
-// Title screen
+// Draw title screen
 function drawTitle() {
+    // Black background
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // draw title image if loaded
+    // Title image
     const img = images.title;
     if (img.complete) {
         const x = Math.floor((WIDTH - 363) / 2);
@@ -160,51 +164,35 @@ function drawTitle() {
         ctx.drawImage(img, x, y);
     }
 
-    // blinking bitmap font text
+    // Blinking "PRESS BUTTON TO START"
     if (showBlink && images.font.complete) {
         drawBitmapText("PRESS BUTTON TO START", 20, 250); // left-aligned
     }
 }
 
-// Game
+// Draw game placeholder
+let lineOffset = 0;
 function drawGame() {
+    // Clouds, bg layers etc. will go here later
 
-    // sky already drawn
-
-    // clouds (placeholder for now)
-    // bg2
-    // bg1
-
-    // street
+    // Street
     ctx.fillStyle = "#867e7c";
     ctx.fillRect(0, HEIGHT - 50, WIDTH, 50);
 
-    // dashed line
+    // Dashed line
     drawRoadLine();
 
-    // granny
-    ctx.drawImage(
-        images.granny,
-        granny.x,
-        granny.y
-    );
+    // Granny
+    ctx.drawImage(images.granny, granny.x, granny.y);
 }
 
-// dashed yellow line
-let lineOffset = 0;
-
+// Draw dashed center line
 function drawRoadLine() {
-
     lineOffset -= speed;
-
-    if (lineOffset < -24) {
-        lineOffset = 0;
-    }
+    if (lineOffset < -24) lineOffset = 0;
 
     ctx.fillStyle = "#fef752";
-
     for (let i = 0; i < WIDTH / 24 + 2; i++) {
-
         ctx.fillRect(
             i * 24 + lineOffset,
             HEIGHT - 25,
