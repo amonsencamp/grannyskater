@@ -145,7 +145,7 @@ function drawBitmapText(text, x, y) {
         ctx.drawImage(
             images.font,
             sx, sy, sw, sh,
-            x + i * bitmapFont.charWidth,
+            x + i * bitmapFont.charWidth + 1,
             y,
             sw, sh
         );
