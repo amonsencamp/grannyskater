@@ -32,8 +32,8 @@ const images = {};
 // Bitmap font
 const bitmapFont = {
     chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
-    charWidth: 27,
-    charHeight: 33
+    charWidth: 8,
+    charHeight: 10
 };
 
 // Granny
