@@ -125,25 +125,24 @@ function draw() {
         drawGame();
     }
 }
-//Draw Bitmap text
 function drawBitmapText(text, x, y) {
-    text = text.toUpperCase(); // ensure matches font sheet
+    text = text.toUpperCase();
 
     for (let i = 0; i < text.length; i++) {
         const ch = text[i];
         const index = bitmapFont.chars.indexOf(ch);
 
-        if (index === -1) continue; // skip unknown chars
+        if (index === -1) continue;
 
         const sx = index * bitmapFont.charWidth;
-        const sy = 0; // single row font
+        const sy = 0;
         const sw = bitmapFont.charWidth;
         const sh = bitmapFont.charHeight;
 
         ctx.drawImage(
-            bitmapFont.image,
-            sx, sy, sw, sh,          // source
-            x + i * bitmapFont.charWidth, y, sw, sh // destination
+            images.font,           // <--- use images.font directly
+            sx, sy, sw, sh,
+            x + i * bitmapFont.charWidth, y, sw, sh
         );
     }
 }
