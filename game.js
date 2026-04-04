@@ -149,22 +149,20 @@ function drawBitmapText(text, x, y) {
 
 // Title screen
 function drawTitle() {
-
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // title image centered
+    // draw title image if loaded
     const img = images.title;
-const x = Math.floor((WIDTH - 363) / 2);
-const y = Math.floor((HEIGHT - 222) / 2 - 10);
+    if (img.complete) {
+        const x = Math.floor((WIDTH - 363) / 2);
+        const y = Math.floor((HEIGHT - 222) / 2 - 10);
+        ctx.drawImage(img, x, y);
+    }
 
-    ctx.drawImage(img, x, y);
-
-    // blinking text
-    if (showBlink) {
-        ctx.fillStyle = "white";
-       ctx.font = "8px Pixel";
-        drawBitmapText("PRESS BUTTON TO START", 100, 250);
+    // blinking bitmap font text
+    if (showBlink && images.font.complete) {
+        drawBitmapText("PRESS BUTTON TO START", 20, 250); // left-aligned
     }
 }
 
