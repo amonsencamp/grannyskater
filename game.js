@@ -91,7 +91,7 @@ function update(delta) {
     // blink text
     blinkTimer += delta;
 
-    if (blinkTimer > 500) {
+    if (blinkTimer > 400) {
         blinkTimer = 0;
         showBlink = !showBlink;
     }
@@ -125,15 +125,15 @@ function drawTitle() {
 
     // title image centered
     const img = images.title;
-    const x = (WIDTH - 363) / 2;
-    const y = (HEIGHT - 222) / 2 - 10;
+const x = Math.floor((WIDTH - 363) / 2);
+const y = Math.floor((HEIGHT - 222) / 2 - 10);
 
     ctx.drawImage(img, x, y);
 
     // blinking text
     if (showBlink) {
         ctx.fillStyle = "white";
-        ctx.font = "16px monospace";
+       ctx.font = "7px Pixel";
         ctx.fillText(
             "PRESS BUTTON TO START",
             150,
