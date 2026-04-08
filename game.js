@@ -178,7 +178,7 @@ function update(delta){
     }
     else if (granny.state === "landing"){
         // landing frames 6-8, slower
-        if (granny.frameTimer > 120){
+        if (granny.frameTimer > 60){
             granny.frame++;
             granny.frameTimer = 0;
             if (granny.frame > 8){
