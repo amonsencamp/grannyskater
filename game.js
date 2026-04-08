@@ -170,30 +170,30 @@ function update(delta){
             granny.grounded = false;
         }
 
-        // --- Animation ---
-        granny.frameTimer += delta;
+// --- Animation ---
+granny.frameTimer += delta;
 
-        if (granny.state === "jump"){
-            // in-air frames 2-5
-            if (granny.vy < -6) granny.frame = 2;
-            else if (granny.vy < -2) granny.frame = 3;
-            else if (granny.vy < 0) granny.frame = 4;
-            else granny.frame = 5;
-        } else if (granny.state === "landing"){
-            // landing frames 6-8
-            if (granny.frameTimer > 50){
-                granny.frame++;
-                granny.frameTimer = 0;
-                if (granny.frame > 8){
-                    granny.frame = 0;
-                    granny.state = "idle";
-                }
-            }
-        } else if (granny.grounded){
+if (granny.state === "jump"){
+    // in-air frames 2-5
+    if (granny.vy < -6) granny.frame = 2;
+    else if (granny.vy < -2) granny.frame = 3;
+    else if (granny.vy < 0)  granny.frame = 4;
+    else                     granny.frame = 5;
+} else if (granny.state === "landing"){
+    // landing frames 6-8, slower
+    if (granny.frameTimer > 120){   // slower, 120ms per frame
+        granny.frame++;
+        granny.frameTimer = 0;
+        if (granny.frame > 8){
             granny.frame = 0;
             granny.state = "idle";
         }
     }
+} else if (granny.grounded){
+    granny.frame = 0;
+    granny.state = "idle";
+}
+
 
     // --- Clouds ---
     cloudsLayer.x -= speed*0.05;
