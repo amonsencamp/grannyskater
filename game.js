@@ -40,7 +40,9 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-    y: HEIGHT - STREET_HEIGHT - 150,
+
+    y: 0,
+    feetY: HEIGHT - STREET_HEIGHT,   // ground anchor
 
     width: 106,
     height: 150,
@@ -162,19 +164,21 @@ function update(delta) {
 
     if (gameState === STATE.PLAYING) {
 
-        // gravity
-        granny.vy += granny.gravity;
-        granny.y += granny.vy;
+// gravity (only when not anticipating)
+if (granny.state !== "anticipation") {
+    granny.vy += granny.gravity;
+    granny.feetY += granny.vy;
+}
 
-        const groundY = HEIGHT - STREET_HEIGHT - granny.height;
+const ground = HEIGHT - STREET_HEIGHT;
 
-        if (granny.y >= groundY) {
-            granny.y = groundY;
-            granny.vy = 0;
-            granny.grounded = true;
-        } else {
-            granny.grounded = false;
-        }
+if (granny.feetY >= ground) {
+    granny.feetY = ground;
+    granny.vy = 0;
+    granny.grounded = true;
+} else {
+    granny.grounded = false;
+}
 
      // animation
 granny.frameTimer += delta;
@@ -184,7 +188,8 @@ if (granny.state === "anticipation") {
     granny.frame = 1;
 
     if (granny.frameTimer > 80) {
-        granny.vy = granny.jumpPower;
+       granny.vy = 0;
+granny.vy += granny.jumpPower;
         granny.state = "jump";
     }
 }
@@ -314,18 +319,21 @@ function drawGame() {
 
     drawRoadLine();
 
-    const sx = granny.frame * granny.width;
+const drawY = granny.feetY - granny.height;
 
-    ctx.drawImage(
-        images.granny,
-        sx,0,
-        granny.width,
-        granny.height,
-        granny.x,
-        granny.y,
-        granny.width,
-        granny.height
-    );
+const sx = granny.frame * granny.width;
+
+ctx.drawImage(
+    images.granny,
+    sx,
+    0,
+    granny.width,
+    granny.height,
+    granny.x,
+    drawY,
+    granny.width,
+    granny.height
+);
 }
 
 // ====== Road line ======
