@@ -39,7 +39,7 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-    y: HEIGHT - 50 - 150,
+    y: HEIGHT - 30 - 150,
     width: 114,
     height: 150,
 
@@ -150,7 +150,7 @@ granny.vy += granny.gravity;
 granny.y += granny.vy;
 
 // Ground collision
-const groundY = HEIGHT - 50 - granny.height;
+const groundY = HEIGHT - 30 - granny.height;
 
 if (granny.y >= groundY) {
     granny.y = groundY;
