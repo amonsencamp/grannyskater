@@ -144,57 +144,53 @@ function update(delta){
 
     if (gameState !== STATE.PLAYING) return;
 
-    // --- Jump physics ---
+    // --- Jump physics and animation ---
+    granny.frameTimer += delta;
+
     if (granny.state === "anticipation"){
         granny.frame = 1;
-        granny.frameTimer += delta;
         if (granny.frameTimer > 80){
             granny.vy = granny.jumpPower;
             granny.state = "jump";
+            granny.frameTimer = 0;
         }
-    } else {
+    }
+    else if (granny.state === "jump"){
         granny.vy += granny.gravity;
         granny.feetY += granny.vy;
 
-        const groundY = HEIGHT - STREET_HEIGHT;
-        if (granny.feetY >= groundY){
-            if (granny.state === "jump"){
-                granny.state = "landing";
-                granny.frame = 6;
-                granny.frameTimer = 0;
-            }
-            granny.feetY = groundY;
+        // in-air frames 2-5
+        if (granny.vy < -6) granny.frame = 2;
+        else if (granny.vy < -2) granny.frame = 3;
+        else if (granny.vy < 0)  granny.frame = 4;
+        else                     granny.frame = 5;
+
+        if (granny.feetY >= HEIGHT - STREET_HEIGHT){
+            granny.feetY = HEIGHT - STREET_HEIGHT;
             granny.vy = 0;
+            granny.state = "landing";
+            granny.frame = 6;
+            granny.frameTimer = 0;
             granny.grounded = true;
         } else {
             granny.grounded = false;
         }
-
-// --- Animation ---
-granny.frameTimer += delta;
-
-if (granny.state === "jump"){
-    // in-air frames 2-5
-    if (granny.vy < -6) granny.frame = 2;
-    else if (granny.vy < -2) granny.frame = 3;
-    else if (granny.vy < 0)  granny.frame = 4;
-    else                     granny.frame = 5;
-} else if (granny.state === "landing"){
-    // landing frames 6-8, slower
-    if (granny.frameTimer > 120){   // slower, 120ms per frame
-        granny.frame++;
-        granny.frameTimer = 0;
-        if (granny.frame > 8){
-            granny.frame = 0;
-            granny.state = "idle";
+    }
+    else if (granny.state === "landing"){
+        // landing frames 6-8, slower
+        if (granny.frameTimer > 120){
+            granny.frame++;
+            granny.frameTimer = 0;
+            if (granny.frame > 8){
+                granny.frame = 0;
+                granny.state = "idle";
+            }
         }
     }
-} else if (granny.grounded){
-    granny.frame = 0;
-    granny.state = "idle";
-}
+    else if (granny.state === "idle"){
+        granny.frame = 0;
+        granny.grounded = true;
     }
-
 
     // --- Clouds ---
     cloudsLayer.x -= speed*0.05;
