@@ -40,7 +40,7 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-    feetY: HEIGHT - STREET_HEIGHT,   // ground anchor
+    feetY: HEIGHT - STREET_HEIGHT,
     width: 106,
     height: 150,
     vy: 0,
@@ -49,7 +49,7 @@ const granny = {
     grounded: true,
     frame: 0,
     frameTimer: 0,
-    state: "idle"
+    state: "idle" // idle, anticipation, jump, landing
 };
 
 // Input
@@ -78,17 +78,16 @@ const imagesToLoad = [
     { name: "font", src: "assets/font.png" }
 ];
 
-fgBuildingFiles.forEach((f, i) => imagesToLoad.push({ name: "fg" + (i+1), src: "assets/" + f }));
-bgBuildingFiles.forEach((f, i) => imagesToLoad.push({ name: "bg" + (i+1), src: "assets/" + f }));
+fgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"fg"+(i+1),src:"assets/"+f}));
+bgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"bg"+(i+1),src:"assets/"+f}));
 
-// Preload
 let loadedCount = 0;
-imagesToLoad.forEach(imgData => {
+imagesToLoad.forEach(imgData=>{
     const img = new Image();
     img.src = imgData.src;
-    img.onload = () => {
+    img.onload = ()=>{
         loadedCount++;
-        if (loadedCount === imagesToLoad.length) {
+        if (loadedCount === imagesToLoad.length){
             initLayers();
             requestAnimationFrame(loop);
         }
@@ -97,37 +96,35 @@ imagesToLoad.forEach(imgData => {
 });
 
 // ====== Background layers ======
-let cloudsLayer = { image: null, x: 0, y: 20, speedMult: 0 };
+let cloudsLayer = { image: null, x:0, y:20, speedMult:0 };
 let distantBuildings = [];
 let foregroundBuildings = [];
 
-function initLayers() {
+function initLayers(){
     cloudsLayer.image = images.clouds;
 
-    // Distant buildings (bg layer)
     let xPos = 0;
-    while (xPos < WIDTH + 200) {
-        const index = Math.floor(Math.random() * bgBuildingFiles.length) + 1;
-        const img = images["bg" + index];
-        distantBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
+    while(xPos < WIDTH + 200){
+        const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
+        const img = images["bg"+idx];
+        distantBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-img.height-40 });
         xPos += img.width;
     }
 
-    // Foreground buildings (fg layer)
     xPos = 0;
-    while (xPos < WIDTH + 200) {
-        const index = Math.floor(Math.random() * fgBuildingFiles.length) + 1;
-        const img = images["fg" + index];
-        foregroundBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height });
+    while(xPos < WIDTH + 200){
+        const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
+        const img = images["fg"+idx];
+        foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-img.height });
         xPos += img.width;
     }
 }
 
 // ====== Start game ======
-function startGame() { gameState = STATE.PLAYING; }
+function startGame(){ gameState = STATE.PLAYING; }
 
 // ====== Main loop ======
-function loop(timestamp) {
+function loop(timestamp){
     const delta = timestamp - lastTime;
     lastTime = timestamp;
 
@@ -138,173 +135,173 @@ function loop(timestamp) {
 }
 
 // ====== Update ======
-function update(delta) {
+function update(delta){
     blinkTimer += delta;
-    if (blinkTimer > 400) {
+    if (blinkTimer > 400){
         blinkTimer = 0;
         showBlink = !showBlink;
     }
 
-    if (gameState === STATE.PLAYING) {
+    if (gameState !== STATE.PLAYING) return;
 
-        // --- Granny physics ---
+    // --- Jump physics ---
+    if (granny.state === "anticipation"){
+        granny.frame = 1;
+        granny.frameTimer += delta;
+        if (granny.frameTimer > 80){
+            granny.vy = granny.jumpPower;
+            granny.state = "jump";
+        }
+    } else {
+        granny.vy += granny.gravity;
+        granny.feetY += granny.vy;
+
+        const groundY = HEIGHT - STREET_HEIGHT;
+        if (granny.feetY >= groundY){
+            if (granny.state === "jump"){
+                granny.state = "landing";
+                granny.frame = 6;
+                granny.frameTimer = 0;
+            }
+            granny.feetY = groundY;
+            granny.vy = 0;
+            granny.grounded = true;
+        } else {
+            granny.grounded = false;
+        }
+
+        // --- Animation ---
         granny.frameTimer += delta;
 
-        // State: anticipation
-        if (granny.state === "anticipation") {
-            granny.frame = 1;
-            if (granny.frameTimer > 80) {
-                granny.vy = granny.jumpPower;
-                granny.state = "jump";
-                granny.grounded = false;
+        if (granny.state === "jump"){
+            // in-air frames 2-5
+            if (granny.vy < -6) granny.frame = 2;
+            else if (granny.vy < -2) granny.frame = 3;
+            else if (granny.vy < 0) granny.frame = 4;
+            else granny.frame = 5;
+        } else if (granny.state === "landing"){
+            // landing frames 6-8
+            if (granny.frameTimer > 50){
+                granny.frame++;
+                granny.frameTimer = 0;
+                if (granny.frame > 8){
+                    granny.frame = 0;
+                    granny.state = "idle";
+                }
             }
-        }
-        // Jump/fall animation
-        else if (!granny.grounded) {
-            granny.vy += granny.gravity;
-            granny.feetY += granny.vy;
-
-            if (granny.feetY >= HEIGHT - STREET_HEIGHT) {
-                granny.feetY = HEIGHT - STREET_HEIGHT;
-                granny.vy = 0;
-                granny.grounded = true;
-                granny.state = "idle";
-            }
-
-            // Determine animation frame based on vy
-            if (granny.vy < -6) granny.frame = 2;  // rising fast
-            else if (granny.vy < -2) granny.frame = 3;  // rising
-            else if (granny.vy < 0) granny.frame = 4;  // nearing peak
-            else if (granny.vy < 2) granny.frame = 5;   // peak/falling start
-            else if (granny.vy < 6) granny.frame = 6;   // falling
-            else if (granny.vy < 10) granny.frame = 7;  // faster falling
-            else granny.frame = 8;                     // landing impact
-        }
-
-        // Grounded idle
-        else {
+        } else if (granny.grounded){
             granny.frame = 0;
+            granny.state = "idle";
         }
+    }
 
-        // --- Background layers ---
-        cloudsLayer.x -= speed * 0.05;
-        if (cloudsLayer.x <= -cloudsLayer.image.width) cloudsLayer.x += cloudsLayer.image.width;
+    // --- Clouds ---
+    cloudsLayer.x -= speed*0.05;
+    if (cloudsLayer.x <= -cloudsLayer.image.width) cloudsLayer.x += cloudsLayer.image.width;
 
-        // Distant buildings
-        distantBuildings.forEach(b => b.x -= speed * 0.2);
-        if (distantBuildings[0].x + distantBuildings[0].image.width < 0) {
-            distantBuildings.shift();
-            const idx = Math.floor(Math.random() * bgBuildingFiles.length) + 1;
-            const img = images["bg" + idx];
-            const last = distantBuildings[distantBuildings.length - 1];
-            distantBuildings.push({
-                image: img,
-                x: last.x + last.image.width,
-                y: HEIGHT - STREET_HEIGHT - img.height - 40
-            });
-        }
+    // --- Distant buildings ---
+    distantBuildings.forEach(b=>b.x -= speed*0.2);
+    if (distantBuildings[0].x + distantBuildings[0].image.width < 0){
+        distantBuildings.shift();
+        const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
+        const img = images["bg"+idx];
+        const last = distantBuildings[distantBuildings.length-1];
+        distantBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-img.height-40 });
+    }
 
-        // Foreground buildings
-        foregroundBuildings.forEach(b => b.x -= speed * 0.8);
-        if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0) {
-            foregroundBuildings.shift();
-            const idx = Math.floor(Math.random() * fgBuildingFiles.length) + 1;
-            const img = images["fg" + idx];
-            const last = foregroundBuildings[foregroundBuildings.length - 1];
-            foregroundBuildings.push({
-                image: img,
-                x: last.x + last.image.width,
-                y: HEIGHT - STREET_HEIGHT - img.height
-            });
-        }
+    // --- Foreground buildings ---
+    foregroundBuildings.forEach(b=>b.x -= speed*0.8);
+    if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
+        foregroundBuildings.shift();
+        const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
+        const img = images["fg"+idx];
+        const last = foregroundBuildings[foregroundBuildings.length-1];
+        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-img.height });
     }
 }
 
 // ====== Draw ======
-function draw() {
-    ctx.fillStyle = "#8dc2e3";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+function draw(){
+    ctx.fillStyle="#8dc2e3";
+    ctx.fillRect(0,0,WIDTH,HEIGHT);
 
-    if (gameState === STATE.TITLE) drawTitle();
-    if (gameState === STATE.PLAYING) drawGame();
+    if (gameState===STATE.TITLE) drawTitle();
+    if (gameState===STATE.PLAYING) drawGame();
 }
 
 // ====== Bitmap font ======
-function drawBitmapText(text, x, y) {
+function drawBitmapText(text,x,y){
     text = text.toUpperCase();
     if (!images.font.complete) return;
 
     const spacing = 1;
-    for (let i = 0; i < text.length; i++) {
+    for (let i=0;i<text.length;i++){
         const ch = text[i];
         const index = bitmapFont.chars.indexOf(ch);
-        if (index === -1) continue;
+        if (index===-1) continue;
 
-        const sx = index * bitmapFont.charWidth;
+        const sx = index*bitmapFont.charWidth;
         ctx.drawImage(
             images.font,
-            sx, 0,
-            bitmapFont.charWidth,
-            bitmapFont.charHeight,
-            x + i * (bitmapFont.charWidth + spacing),
-            y,
-            bitmapFont.charWidth,
-            bitmapFont.charHeight
+            sx,0,
+            bitmapFont.charWidth, bitmapFont.charHeight,
+            x+i*(bitmapFont.charWidth+spacing), y,
+            bitmapFont.charWidth, bitmapFont.charHeight
         );
     }
 }
 
-// ====== Title screen ======
-function drawTitle() {
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+// ====== Title ======
+function drawTitle(){
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,WIDTH,HEIGHT);
 
     const img = images.title;
-    if (img.complete) {
-        const x = Math.floor((WIDTH - 363) / 2);
-        const y = Math.floor((HEIGHT - 222) / 2 - 10);
-        ctx.drawImage(img, x, y);
+    if (img.complete){
+        const x = Math.floor((WIDTH-363)/2);
+        const y = Math.floor((HEIGHT-222)/2-10);
+        ctx.drawImage(img,x,y);
     }
 
     if (showBlink)
-        drawBitmapText("PRESS BUTTON TO START", 20, 250);
+        drawBitmapText("PRESS BUTTON TO START",20,250);
 }
 
-// ====== Game draw ======
-let lineOffset = 0;
+// ====== Game ======
+let lineOffset=0;
 
-function drawGame() {
-    // Clouds
-    ctx.drawImage(cloudsLayer.image, cloudsLayer.x, cloudsLayer.y);
-    ctx.drawImage(cloudsLayer.image, cloudsLayer.x + cloudsLayer.image.width, cloudsLayer.y);
+function drawGame(){
+    ctx.drawImage(cloudsLayer.image,cloudsLayer.x,cloudsLayer.y);
+    ctx.drawImage(cloudsLayer.image,cloudsLayer.x+cloudsLayer.image.width,cloudsLayer.y);
 
-    // Distant buildings
-    distantBuildings.forEach(b => ctx.drawImage(b.image, b.x, b.y));
+    distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
+    foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
 
-    // Foreground buildings
-    foregroundBuildings.forEach(b => ctx.drawImage(b.image, b.x, b.y));
-
-    // Street
-    ctx.fillStyle = "#867e7c";
-    ctx.fillRect(0, HEIGHT - STREET_HEIGHT, WIDTH, STREET_HEIGHT);
+    ctx.fillStyle="#867e7c";
+    ctx.fillRect(0,HEIGHT-STREET_HEIGHT,WIDTH,STREET_HEIGHT);
 
     drawRoadLine();
 
-    // Granny
-    if (images.granny.complete) {
-        const sx = granny.frame * granny.width;
-        const drawY = granny.feetY - granny.height;
-        ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
-    }
+    // draw granny
+    const drawY = granny.feetY - granny.height;
+    const sx = granny.frame * granny.width;
+
+    ctx.drawImage(
+        images.granny,
+        sx, 0,
+        granny.width, granny.height,
+        granny.x, drawY,
+        granny.width, granny.height
+    );
 }
 
 // ====== Road line ======
-function drawRoadLine() {
+function drawRoadLine(){
     lineOffset -= speed;
-    if (lineOffset < -24) lineOffset = 0;
+    if (lineOffset<-24) lineOffset=0;
 
-    ctx.fillStyle = "#fef752";
-    for (let i = 0; i < WIDTH / 24 + 2; i++) {
-        ctx.fillRect(i * 24 + lineOffset, HEIGHT - 15, 12, 3);
+    ctx.fillStyle="#fef752";
+    for(let i=0;i<WIDTH/24+2;i++){
+        ctx.fillRect(i*24+lineOffset,HEIGHT-15,12,3);
     }
 }
