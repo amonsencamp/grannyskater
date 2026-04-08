@@ -176,55 +176,35 @@ function update(delta) {
             granny.grounded = false;
         }
 
-        // animation
-        granny.frameTimer += delta;
+     // animation
+granny.frameTimer += delta;
 
-        switch (granny.state) {
+// anticipation
+if (granny.state === "anticipation") {
+    granny.frame = 1;
 
-            case "idle":
-                granny.frame = 0;
-                break;
+    if (granny.frameTimer > 80) {
+        granny.vy = granny.jumpPower;
+        granny.state = "jump";
+    }
+}
 
-            case "anticipation":
-                granny.frame = 1;
-                if (granny.frameTimer > 80) {
-                    granny.vy = granny.jumpPower;
-                    granny.state = "rising";
-                    granny.frameTimer = 0;
-                }
-                break;
+// jump animation based on velocity
+else {
 
-            case "rising":
-                if (granny.vy < -6) granny.frame = 2;
-                else if (granny.vy < -2) granny.frame = 3;
-                else granny.frame = 4;
+    if (granny.grounded) {
+        granny.frame = 0;
+        granny.state = "idle";
+    }
 
-                if (granny.vy >= 0) granny.state = "peak";
-                break;
-
-            case "peak":
-                granny.frame = 5;
-                if (granny.vy > 2) granny.state = "falling";
-                break;
-
-            case "falling":
-                if (granny.vy < 6) granny.frame = 6;
-                else if (granny.vy < 10) granny.frame = 7;
-                else granny.frame = 8;
-
-                if (granny.grounded) {
-                    granny.state = "landing";
-                    granny.frameTimer = 0;
-                }
-                break;
-
-            case "landing":
-                if (granny.frameTimer < 60) granny.frame = 6;
-                else if (granny.frameTimer < 120) granny.frame = 7;
-                else if (granny.frameTimer < 180) granny.frame = 8;
-                else granny.state = "idle";
-                break;
-        }
+    else if (granny.vy < -6) granny.frame = 2;
+    else if (granny.vy < -2) granny.frame = 3;
+    else if (granny.vy < 0)  granny.frame = 4;
+    else if (granny.vy < 2)  granny.frame = 5;
+    else if (granny.vy < 6)  granny.frame = 6;
+    else if (granny.vy < 10) granny.frame = 7;
+    else                     granny.frame = 8;
+}
 
         // Clouds
         cloudsLayer.x -= speed * 0.05;
