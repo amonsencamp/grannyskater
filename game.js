@@ -73,7 +73,7 @@ const bgBuildingFiles = ["bg_building1.png","bg_building2.png","bg_building3.png
 
 const imagesToLoad = [
     { name: "title", src: "assets/titlescreen.png" },
-    { name: "granny", src: "assets/granny.png" },
+    { name: "granny", src: "assets/granny_jump.png" },
     { name: "clouds", src: "assets/clouds.png" },
     { name: "font", src: "assets/font.png" }
 ];
