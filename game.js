@@ -39,17 +39,30 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-    y: HEIGHT - 30 - 150,
+    y: HEIGHT - 50 - 150,
     width: 114,
-    height: 150
+    height: 150,
+
+    vy: 0,
+    gravity: 0.5,
+    jumpPower: -11,
+    grounded: true
 };
 
 // Input
 let buttonPressed = false;
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
-        buttonPressed = true;
-        if (gameState === STATE.TITLE) startGame();
+
+        if (gameState === STATE.TITLE) {
+            startGame();
+            return;
+        }
+
+        if (gameState === STATE.PLAYING && granny.grounded) {
+            granny.vy = granny.jumpPower;
+            granny.grounded = false;
+        }
     }
 });
 window.addEventListener("keyup", (e) => {
@@ -132,6 +145,18 @@ function update(delta) {
     if (blinkTimer > 400) { blinkTimer = 0; showBlink = !showBlink; }
 
     if (gameState === STATE.PLAYING) {
+// Apply gravity
+granny.vy += granny.gravity;
+granny.y += granny.vy;
+
+// Ground collision
+const groundY = HEIGHT - 50 - granny.height;
+
+if (granny.y >= groundY) {
+    granny.y = groundY;
+    granny.vy = 0;
+    granny.grounded = true;
+}
         // Clouds
         cloudsLayer.x -= speed * cloudsLayer.speedMult;
         if (cloudsLayer.x <= -cloudsLayer.image.width) cloudsLayer.x += cloudsLayer.image.width;
