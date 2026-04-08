@@ -40,18 +40,13 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-
-    y: 0,
     feetY: HEIGHT - STREET_HEIGHT,   // ground anchor
-
     width: 106,
     height: 150,
-
     vy: 0,
     gravity: 0.5,
     jumpPower: -11,
     grounded: true,
-
     frame: 0,
     frameTimer: 0,
     state: "idle"
@@ -60,7 +55,6 @@ const granny = {
 // Input
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
-
         if (gameState === STATE.TITLE) {
             startGame();
             return;
@@ -108,42 +102,32 @@ let distantBuildings = [];
 let foregroundBuildings = [];
 
 function initLayers() {
-
     cloudsLayer.image = images.clouds;
 
+    // Distant buildings (bg layer)
     let xPos = 0;
     while (xPos < WIDTH + 200) {
         const index = Math.floor(Math.random() * bgBuildingFiles.length) + 1;
         const img = images["bg" + index];
-        distantBuildings.push({
-            image: img,
-            x: xPos,
-            y: HEIGHT - STREET_HEIGHT - img.height - 40
-        });
+        distantBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
         xPos += img.width;
     }
 
+    // Foreground buildings (fg layer)
     xPos = 0;
     while (xPos < WIDTH + 200) {
         const index = Math.floor(Math.random() * fgBuildingFiles.length) + 1;
         const img = images["fg" + index];
-        foregroundBuildings.push({
-            image: img,
-            x: xPos,
-            y: HEIGHT - STREET_HEIGHT - img.height
-        });
+        foregroundBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height });
         xPos += img.width;
     }
 }
 
 // ====== Start game ======
-function startGame() {
-    gameState = STATE.PLAYING;
-}
+function startGame() { gameState = STATE.PLAYING; }
 
 // ====== Main loop ======
 function loop(timestamp) {
-
     const delta = timestamp - lastTime;
     lastTime = timestamp;
 
@@ -155,7 +139,6 @@ function loop(timestamp) {
 
 // ====== Update ======
 function update(delta) {
-
     blinkTimer += delta;
     if (blinkTimer > 400) {
         blinkTimer = 0;
@@ -164,65 +147,56 @@ function update(delta) {
 
     if (gameState === STATE.PLAYING) {
 
-// gravity (only when not anticipating)
-if (granny.state !== "anticipation") {
-    granny.vy += granny.gravity;
-    granny.feetY += granny.vy;
-}
+        // --- Granny physics ---
+        granny.frameTimer += delta;
 
-const ground = HEIGHT - STREET_HEIGHT;
+        // State: anticipation
+        if (granny.state === "anticipation") {
+            granny.frame = 1;
+            if (granny.frameTimer > 80) {
+                granny.vy = granny.jumpPower;
+                granny.state = "jump";
+                granny.grounded = false;
+            }
+        }
+        // Jump/fall animation
+        else if (!granny.grounded) {
+            granny.vy += granny.gravity;
+            granny.feetY += granny.vy;
 
-if (granny.feetY >= ground) {
-    granny.feetY = ground;
-    granny.vy = 0;
-    granny.grounded = true;
-} else {
-    granny.grounded = false;
-}
+            if (granny.feetY >= HEIGHT - STREET_HEIGHT) {
+                granny.feetY = HEIGHT - STREET_HEIGHT;
+                granny.vy = 0;
+                granny.grounded = true;
+                granny.state = "idle";
+            }
 
-     // animation
-granny.frameTimer += delta;
+            // Determine animation frame based on vy
+            if (granny.vy < -6) granny.frame = 2;  // rising fast
+            else if (granny.vy < -2) granny.frame = 3;  // rising
+            else if (granny.vy < 0) granny.frame = 4;  // nearing peak
+            else if (granny.vy < 2) granny.frame = 5;   // peak/falling start
+            else if (granny.vy < 6) granny.frame = 6;   // falling
+            else if (granny.vy < 10) granny.frame = 7;  // faster falling
+            else granny.frame = 8;                     // landing impact
+        }
 
-// anticipation
-if (granny.state === "anticipation") {
-    granny.frame = 1;
+        // Grounded idle
+        else {
+            granny.frame = 0;
+        }
 
-    if (granny.frameTimer > 80) {
-       granny.vy = 0;
-granny.vy += granny.jumpPower;
-        granny.state = "jump";
-    }
-}
-
-// jump animation based on velocity
-else {
-
-    if (granny.grounded) {
-        granny.frame = 0;
-        granny.state = "idle";
-    }
-
-    else if (granny.vy < -6) granny.frame = 2;
-    else if (granny.vy < -2) granny.frame = 3;
-    else if (granny.vy < 0)  granny.frame = 4;
-    else if (granny.vy < 2)  granny.frame = 5;
-    else if (granny.vy < 6)  granny.frame = 6;
-    else if (granny.vy < 10) granny.frame = 7;
-    else                     granny.frame = 8;
-}
-
-        // Clouds
+        // --- Background layers ---
         cloudsLayer.x -= speed * 0.05;
-        if (cloudsLayer.x <= -cloudsLayer.image.width)
-            cloudsLayer.x += cloudsLayer.image.width;
+        if (cloudsLayer.x <= -cloudsLayer.image.width) cloudsLayer.x += cloudsLayer.image.width;
 
-        // distant buildings
+        // Distant buildings
         distantBuildings.forEach(b => b.x -= speed * 0.2);
         if (distantBuildings[0].x + distantBuildings[0].image.width < 0) {
             distantBuildings.shift();
-            const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
-            const img = images["bg"+idx];
-            const last = distantBuildings[distantBuildings.length-1];
+            const idx = Math.floor(Math.random() * bgBuildingFiles.length) + 1;
+            const img = images["bg" + idx];
+            const last = distantBuildings[distantBuildings.length - 1];
             distantBuildings.push({
                 image: img,
                 x: last.x + last.image.width,
@@ -230,13 +204,13 @@ else {
             });
         }
 
-        // foreground buildings
+        // Foreground buildings
         foregroundBuildings.forEach(b => b.x -= speed * 0.8);
         if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0) {
             foregroundBuildings.shift();
-            const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
-            const img = images["fg"+idx];
-            const last = foregroundBuildings[foregroundBuildings.length-1];
+            const idx = Math.floor(Math.random() * fgBuildingFiles.length) + 1;
+            const img = images["fg" + idx];
+            const last = foregroundBuildings[foregroundBuildings.length - 1];
             foregroundBuildings.push({
                 image: img,
                 x: last.x + last.image.width,
@@ -248,9 +222,8 @@ else {
 
 // ====== Draw ======
 function draw() {
-
     ctx.fillStyle = "#8dc2e3";
-    ctx.fillRect(0,0,WIDTH,HEIGHT);
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     if (gameState === STATE.TITLE) drawTitle();
     if (gameState === STATE.PLAYING) drawGame();
@@ -258,26 +231,22 @@ function draw() {
 
 // ====== Bitmap font ======
 function drawBitmapText(text, x, y) {
-
     text = text.toUpperCase();
     if (!images.font.complete) return;
 
     const spacing = 1;
-
-    for (let i=0;i<text.length;i++){
-
+    for (let i = 0; i < text.length; i++) {
         const ch = text[i];
         const index = bitmapFont.chars.indexOf(ch);
         if (index === -1) continue;
 
         const sx = index * bitmapFont.charWidth;
-
         ctx.drawImage(
             images.font,
-            sx,0,
+            sx, 0,
             bitmapFont.charWidth,
             bitmapFont.charHeight,
-            x + i*(bitmapFont.charWidth+spacing),
+            x + i * (bitmapFont.charWidth + spacing),
             y,
             bitmapFont.charWidth,
             bitmapFont.charHeight
@@ -285,71 +254,57 @@ function drawBitmapText(text, x, y) {
     }
 }
 
-// ====== Title ======
+// ====== Title screen ======
 function drawTitle() {
-
-    ctx.fillStyle="black";
-    ctx.fillRect(0,0,WIDTH,HEIGHT);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     const img = images.title;
-
     if (img.complete) {
-        const x = Math.floor((WIDTH-363)/2);
-        const y = Math.floor((HEIGHT-222)/2-10);
-        ctx.drawImage(img,x,y);
+        const x = Math.floor((WIDTH - 363) / 2);
+        const y = Math.floor((HEIGHT - 222) / 2 - 10);
+        ctx.drawImage(img, x, y);
     }
 
     if (showBlink)
-        drawBitmapText("PRESS BUTTON TO START",20,250);
+        drawBitmapText("PRESS BUTTON TO START", 20, 250);
 }
 
-// ====== Game ======
+// ====== Game draw ======
 let lineOffset = 0;
 
 function drawGame() {
+    // Clouds
+    ctx.drawImage(cloudsLayer.image, cloudsLayer.x, cloudsLayer.y);
+    ctx.drawImage(cloudsLayer.image, cloudsLayer.x + cloudsLayer.image.width, cloudsLayer.y);
 
-    ctx.drawImage(cloudsLayer.image,cloudsLayer.x,cloudsLayer.y);
-    ctx.drawImage(cloudsLayer.image,cloudsLayer.x+cloudsLayer.image.width,cloudsLayer.y);
+    // Distant buildings
+    distantBuildings.forEach(b => ctx.drawImage(b.image, b.x, b.y));
 
-    distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
-    foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
+    // Foreground buildings
+    foregroundBuildings.forEach(b => ctx.drawImage(b.image, b.x, b.y));
 
-    ctx.fillStyle="#867e7c";
-    ctx.fillRect(0,HEIGHT-STREET_HEIGHT,WIDTH,STREET_HEIGHT);
+    // Street
+    ctx.fillStyle = "#867e7c";
+    ctx.fillRect(0, HEIGHT - STREET_HEIGHT, WIDTH, STREET_HEIGHT);
 
     drawRoadLine();
 
-const drawY = granny.feetY - granny.height;
-
-const sx = granny.frame * granny.width;
-
-ctx.drawImage(
-    images.granny,
-    sx,
-    0,
-    granny.width,
-    granny.height,
-    granny.x,
-    drawY,
-    granny.width,
-    granny.height
-);
+    // Granny
+    if (images.granny.complete) {
+        const sx = granny.frame * granny.width;
+        const drawY = granny.feetY - granny.height;
+        ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
+    }
 }
 
 // ====== Road line ======
-function drawRoadLine(){
-
+function drawRoadLine() {
     lineOffset -= speed;
     if (lineOffset < -24) lineOffset = 0;
 
-    ctx.fillStyle="#fef752";
-
-    for(let i=0;i<WIDTH/24+2;i++){
-        ctx.fillRect(
-            i*24+lineOffset,
-            HEIGHT-15,
-            12,
-            3
-        );
+    ctx.fillStyle = "#fef752";
+    for (let i = 0; i < WIDTH / 24 + 2; i++) {
+        ctx.fillRect(i * 24 + lineOffset, HEIGHT - 15, 12, 3);
     }
 }
