@@ -193,6 +193,7 @@ if (granny.state === "jump"){
     granny.frame = 0;
     granny.state = "idle";
 }
+    }
 
 
     // --- Clouds ---
