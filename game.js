@@ -16,7 +16,7 @@ const HEIGHT = 300;
 
 const STREET_HEIGHT = 30;
 const ROAD_EXTENSION = 50; // raises granny + road
-const BASELINE_INSET = -15; // how far granny sits into the road
+const BASELINE_INSET = 25; // how far granny sits into the road
 
 // Game states
 const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
