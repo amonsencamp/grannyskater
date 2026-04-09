@@ -99,6 +99,7 @@ const bgBuildingFiles = [
 const obstacleFiles = [
   { name: "cone", width: 25, height: 31, src: "assets/cone.png" },
   { name: "manhole", width: 50, height: 17, src: "assets/manhole.png" }
+  { name: "trash", width: 28, height: 56, src: "assets/trash.png" }
 ];
 
 const imagesToLoad = [
