@@ -372,7 +372,7 @@ function drawGame(){
   });
 
   // granny shadow
-  const shadowY = GROUND_Y - 20; // just below feet
+  const shadowY = GROUND_Y - 2; // just below feet
   let shadowAlpha = 0.3; // default on ground
   if (!granny.grounded){
     const jumpHeight = GROUND_Y - granny.feetY;
