@@ -298,8 +298,6 @@ function update(){
 
     // Road line (move here to sync with obstacles/foreground)
     lineOffset -= speed;
-    const CYCLE = 24 + 36; // dash + gap
-    if (lineOffset < -CYCLE) lineOffset += CYCLE;
 
     // Collision check
     for (let o of obstacles){
@@ -383,7 +381,7 @@ function drawGame(){
     ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
 }
 
-// ====== Road line ======
+// ====== Draw road line ======
 function drawRoadLine(){
     const DASH = 24;
     const GAP = 36;
@@ -391,9 +389,10 @@ function drawRoadLine(){
 
     ctx.fillStyle = "#fef752";
 
-    for(let i = 0; i < WIDTH / CYCLE + 2; i++){
+    for(let i = -1; i < WIDTH / CYCLE + 2; i++){
+        const x = i * CYCLE + (lineOffset % CYCLE);
         ctx.fillRect(
-            i * CYCLE + lineOffset,
+            x,
             HEIGHT - 25,
             DASH,
             3
