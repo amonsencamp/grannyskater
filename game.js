@@ -55,7 +55,7 @@ const granny = {
 };
 
 // Granny hitbox relative to sprite
-const GRANNY_HITBOX = { x: 20, y: 40, width: 40, height: 95 };
+const GRANNY_HITBOX = { x: 30, y: 40, width: 40, height: 95 };
 
 // Obstacles
 const obstacles = [];
