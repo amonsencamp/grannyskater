@@ -54,9 +54,9 @@ const granny = {
 
 // Granny hitbox (shifted forward for skateboard)
 const GRANNY_HITBOX = {
-  x: 50, // shifted right
+  x: 40, // shifted right
   y: 40,
-  width: 40,
+  width: 35,
   height: 95
 };
 
