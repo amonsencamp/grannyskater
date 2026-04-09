@@ -62,10 +62,8 @@ const GRANNY_HITBOX = {
 
 // Obstacles
 const obstacles = [];
-const OBSTACLE_WIDTH = 25;  // cone width
-const OBSTACLE_HEIGHT = 31; // cone height
-const OBSTACLE_GAP = 220;
 let obstacleTimer = 0;
+let nextObstacleGap = randomGap();
 
 // Input
 window.addEventListener("keydown", (e) => {
@@ -98,19 +96,25 @@ const bgBuildingFiles = [
   "bg_building5.png"
 ];
 
+const obstacleFiles = [
+  { name: "cone", width: 25, height: 31, src: "assets/cone.png" },
+  { name: "manhole", width: 30, height: 10, src: "assets/manhole.png" }
+];
+
 const imagesToLoad = [
   { name: "title", src: "assets/titlescreen.png" },
   { name: "granny", src: "assets/granny_jump.png" },
   { name: "clouds", src: "assets/clouds.png" },
-  { name: "font", src: "assets/font.png" },
-  { name: "cone", src: "assets/cone.png" }
+  { name: "font", src: "assets/font.png" }
 ];
 
+// Buildings
 fgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"fg"+(i+1),src:"assets/"+f}));
 bgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"bg"+(i+1),src:"assets/"+f}));
+// Obstacles
+obstacleFiles.forEach(o => imagesToLoad.push({name: o.name, src: o.src}));
 
 let loadedCount = 0;
-
 imagesToLoad.forEach(imgData=>{
   const img = new Image();
   img.src = imgData.src;
@@ -174,6 +178,11 @@ function checkCollision(a, b){
 // ====== Start game ======
 function startGame(){
   gameState = STATE.PLAYING;
+}
+
+// ====== Random gap helper ======
+function randomGap() {
+  return 150 + Math.floor(Math.random() * 150); // 150-300 px between obstacles
 }
 
 // ====== Main loop ======
@@ -275,15 +284,20 @@ function update(){
     });
   }
 
-  // Spawn obstacles
+  // Spawn obstacles (irregular intervals)
   obstacleTimer++;
-  if (obstacleTimer > OBSTACLE_GAP){
+  if (obstacleTimer > nextObstacleGap){
     obstacleTimer = 0;
+    nextObstacleGap = randomGap();
+
+    // Choose random obstacle
+    const choice = obstacleFiles[Math.floor(Math.random() * obstacleFiles.length)];
     obstacles.push({
       x: WIDTH,
-      y: GROUND_Y - OBSTACLE_HEIGHT,
-      width: OBSTACLE_WIDTH,
-      height: OBSTACLE_HEIGHT
+      y: GROUND_Y - choice.height,
+      width: choice.width,
+      height: choice.height,
+      name: choice.name
     });
   }
 
@@ -366,20 +380,20 @@ function drawGame(){
   ctx.fillRect(0, ROAD_TOP, WIDTH, STREET_HEIGHT + ROAD_EXTENSION);
   drawRoadLine();
 
-  // obstacles (cones)
+  // obstacles
   obstacles.forEach(o=>{
-    ctx.drawImage(images.cone, o.x, o.y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT);
+    ctx.drawImage(images[o.name], o.x, o.y, o.width, o.height);
   });
 
   // granny shadow
-  const shadowY = GROUND_Y - 2; // just below feet
+  const shadowY = GROUND_Y + 5; // just below feet
   let shadowAlpha = 0.3; // default on ground
   if (!granny.grounded){
     const jumpHeight = GROUND_Y - granny.feetY;
     shadowAlpha = Math.max(0.01, 0.3 - 0.29 * (jumpHeight / 150)); // fade with height
   }
   ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
-  ctx.fillRect(granny.x + 20, shadowY, 60, 4); // centered under granny
+  ctx.fillRect(granny.x + 33, shadowY, 40, 1); // centered under granny
 
   // granny
   const drawY = granny.feetY - granny.height;
