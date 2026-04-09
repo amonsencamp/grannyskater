@@ -104,6 +104,7 @@ let foregroundBuildings = [];
 function initLayers(){
     cloudsLayer.image = images.clouds;
 
+    // distant buildings
     let xPos = 0;
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
@@ -112,12 +113,12 @@ function initLayers(){
         xPos += img.width;
     }
 
+    // foreground buildings
     xPos = 0;
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
         const img = images["fg"+idx];
-        // shift down by baseline offset so fg aligns with street
-        foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height });
+        foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height }); // <-- shift down
         xPos += img.width;
     }
 }
@@ -162,7 +163,6 @@ function update(delta){
         granny.vy += granny.gravity;
         granny.feetY += granny.vy;
 
-        // in-air frames 2-5
         if (granny.vy < -6) granny.frame = 2;
         else if (granny.vy < -2) granny.frame = 3;
         else if (granny.vy < 0)  granny.frame = 4;
@@ -180,8 +180,7 @@ function update(delta){
         }
     }
     else if (granny.state === "landing"){
-        // landing frames 6-8, faster
-        if (granny.frameTimer > 60){
+        if (granny.frameTimer > 60){ // landing twice as fast
             granny.frame++;
             granny.frameTimer = 0;
             if (granny.frame > 8){
@@ -216,7 +215,7 @@ function update(delta){
         const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
         const img = images["fg"+idx];
         const last = foregroundBuildings[foregroundBuildings.length-1];
-        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height }); // corrected
+        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height }); // <-- fixed
     }
 }
 
