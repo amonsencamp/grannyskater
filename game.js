@@ -221,11 +221,11 @@ function update(delta){
     }
 
     const grannyBox = {
-        x: granny.x + GRANNY_HITBOX.x,
-        y: (granny.feetY - granny.height) + GRANNY_HITBOX.y,
-        width: GRANNY_HITBOX.width,
-        height: GRANNY_HITBOX.height
-    };
+    x: granny.x + GRANNY_HITBOX.x,
+    y: (granny.feetY - granny.height) + GRANNY_HITBOX.y,
+    width: GRANNY_HITBOX.width,
+    height: GRANNY_HITBOX.height
+};
 
     // Clouds
     cloudsLayer.x -= speed * 0.05;
