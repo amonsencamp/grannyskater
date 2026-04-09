@@ -13,7 +13,7 @@ ctx.msImageSmoothingEnabled = false;
 // Canvas size
 const WIDTH = 400;
 const HEIGHT = 300;
-const STREET_HEIGHT = 30;
+const STREET_HEIGHT = 50;
 
 // Game states
 const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
