@@ -46,7 +46,7 @@ const granny = {
     height: 150,
     vy: 0,
     gravity: 0.5,
-    jumpPower: -11,
+    jumpPower: -5,
     grounded: true,
     frame: 0,
     frameTimer: 0,
