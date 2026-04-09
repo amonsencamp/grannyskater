@@ -54,7 +54,7 @@ const granny = {
 
 // Granny hitbox (shifted forward for skateboard)
 const GRANNY_HITBOX = {
-    x: 50, // shifted right
+    x: 50,
     y: 40,
     width: 40,
     height: 95
@@ -66,6 +66,9 @@ const OBSTACLE_WIDTH = 25;  // cone width
 const OBSTACLE_HEIGHT = 31; // cone height
 const OBSTACLE_GAP = 220;
 let obstacleTimer = 0;
+
+// Road line
+let lineOffset = 0;
 
 // Input
 window.addEventListener("keydown", (e) => {
@@ -247,8 +250,7 @@ function update(){
         height: GRANNY_HITBOX.height
     };
 
-    // Clouds (static)
-    // no movement
+    // ====== Update moving elements ======
 
     // Distant buildings (slow parallax)
     distantBuildings.forEach(b => b.x -= speed * 0.2);
@@ -278,7 +280,7 @@ function update(){
         });
     }
 
-    // Spawn obstacles
+    // Obstacles
     obstacleTimer++;
     if (obstacleTimer > OBSTACLE_GAP){
         obstacleTimer = 0;
@@ -289,12 +291,15 @@ function update(){
             height: OBSTACLE_HEIGHT
         });
     }
-
-    // Move obstacles
     obstacles.forEach(o => o.x -= speed);
     while (obstacles.length && obstacles[0].x + obstacles[0].width < 0){
         obstacles.shift();
     }
+
+    // Road line (move here to sync with obstacles/foreground)
+    lineOffset -= speed;
+    const CYCLE = 24 + 36; // dash + gap
+    if (lineOffset < -CYCLE) lineOffset += CYCLE;
 
     // Collision check
     for (let o of obstacles){
@@ -356,8 +361,6 @@ function drawTitle(){
 }
 
 // ====== Game ======
-let lineOffset = 0;
-
 function drawGame(){
     ctx.drawImage(cloudsLayer.image,cloudsLayer.x,cloudsLayer.y);
 
@@ -385,9 +388,6 @@ function drawRoadLine(){
     const DASH = 24;
     const GAP = 36;
     const CYCLE = DASH + GAP;
-
-    lineOffset -= speed;
-    if (lineOffset < -CYCLE) lineOffset = 0;
 
     ctx.fillStyle = "#fef752";
 
