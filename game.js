@@ -120,7 +120,7 @@ function initLayers(){
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
         const img = images["bg"+idx];
-        distantBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
+        distantBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height - 60 });
         xPos += img.width;
     }
 
