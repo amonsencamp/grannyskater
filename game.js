@@ -382,11 +382,21 @@ function drawGame(){
 
 // ====== Road line ======
 function drawRoadLine(){
-    lineOffset -= speed;
-    if (lineOffset < -24) lineOffset = 0;
+    const DASH = 24;
+    const GAP = 36;
+    const CYCLE = DASH + GAP;
 
-    ctx.fillStyle="#fef752";
-    for(let i=0;i<WIDTH/24+2;i++){
-        ctx.fillRect(i*24 + lineOffset, HEIGHT - 25, 12, 3);
+    lineOffset -= speed;
+    if (lineOffset < -CYCLE) lineOffset = 0;
+
+    ctx.fillStyle = "#fef752";
+
+    for(let i = 0; i < WIDTH / CYCLE + 2; i++){
+        ctx.fillRect(
+            i * CYCLE + lineOffset,
+            HEIGHT - 25,
+            DASH,
+            3
+        );
     }
 }
