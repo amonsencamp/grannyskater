@@ -53,6 +53,13 @@ const granny = {
     state: "idle" // idle, anticipation, jump, landing
 };
 
+// Obstacles
+const obstacles = [];
+const OBSTACLE_WIDTH = 20;
+const OBSTACLE_HEIGHT = 100;
+const OBSTACLE_GAP = 220; // distance between obstacles
+let obstacleTimer = 0;
+
 // Input
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
@@ -225,6 +232,28 @@ function update(delta){
         y:HEIGHT-STREET_HEIGHT-img.height
     });
 }
+    // --- Spawn obstacles ---
+obstacleTimer += speed;
+if (obstacleTimer > OBSTACLE_GAP) {
+    obstacleTimer = 0;
+
+    obstacles.push({
+        x: WIDTH,
+        y: HEIGHT - STREET_HEIGHT - OBSTACLE_HEIGHT,
+        width: OBSTACLE_WIDTH,
+        height: OBSTACLE_HEIGHT
+    });
+}
+
+    // --- Move obstacles ---
+obstacles.forEach(o => o.x -= speed);
+
+// remove offscreen
+if (obstacles.length && obstacles[0].x + obstacles[0].width < 0) {
+    obstacles.shift();
+}
+
+    
 }
 
 // ====== Draw ======
@@ -288,7 +317,11 @@ function drawGame(){
     ctx.fillRect(0,HEIGHT-STREET_HEIGHT,WIDTH,STREET_HEIGHT);
 
     drawRoadLine();
-
+// draw obstacles
+ctx.fillStyle = "#ff3b3b";
+obstacles.forEach(o => {
+    ctx.fillRect(o.x, o.y, o.width, o.height);
+});
     // draw granny
     const drawY = granny.feetY - granny.height;
     const sx = granny.frame * granny.width;
