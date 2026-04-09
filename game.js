@@ -28,7 +28,7 @@ let blinkTimer = 0;
 let showBlink = true;
 
 // Game speed
-let speed = 2;
+let speed = 3;
 
 // Images container
 const images = {};
