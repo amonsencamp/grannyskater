@@ -215,7 +215,7 @@ function update(delta){
         const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
         const img = images["fg"+idx];
         const last = foregroundBuildings[foregroundBuildings.length-1];
-        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-20-img.height }); // adjusted baseline
+        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-img.height }); // adjusted baseline
     }
 }
 
