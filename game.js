@@ -379,7 +379,7 @@ function drawGame(){
     shadowAlpha = Math.max(0.01, 0.3 - 0.29 * (jumpHeight / 150)); // fade with height
   }
   ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
-  ctx.fillRect(granny.x + 20, shadowY, 70, 4); // centered under granny
+  ctx.fillRect(granny.x + 20, shadowY, 60, 4); // centered under granny
 
   // granny
   const drawY = granny.feetY - granny.height;
