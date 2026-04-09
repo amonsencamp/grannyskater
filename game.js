@@ -113,14 +113,17 @@ function initLayers(){
         xPos += img.width;
     }
 
-    // foreground buildings
-    xPos = 0;
-    while(xPos < WIDTH + 200){
-        const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
-        const img = images["fg"+idx];
-        foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height }); // <-- shift down
-        xPos += img.width;
-    }
+  // foreground buildings
+xPos = 0;
+while(xPos < WIDTH + 200){
+    const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
+    const img = images["fg"+idx];
+    foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-img.height }); // flush with street
+    xPos += img.width;
+}
+
+// Later, when recycling:
+foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-img.height }); // flush with street
 }
 
 // ====== Start game ======
