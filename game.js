@@ -417,7 +417,7 @@ function drawRoadLine(){
     for(let i=0;i<WIDTH/24+2;i++){
         ctx.fillRect(
             i*24 + lineOffset,
-            HEIGHT - 15,
+            HEIGHT - 25,
             12,
             3
         );
