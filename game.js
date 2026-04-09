@@ -54,7 +54,7 @@ const granny = {
 
 // Granny hitbox (shifted forward for skateboard)
 const GRANNY_HITBOX = {
-    x: 50, // shifted right
+    x: 50, 
     y: 40,
     width: 40,
     height: 95
@@ -62,8 +62,8 @@ const GRANNY_HITBOX = {
 
 // Obstacles
 const obstacles = [];
-const OBSTACLE_WIDTH = 25;  // cone image width
-const OBSTACLE_HEIGHT = 31; // cone image height
+const OBSTACLE_WIDTH = 25;
+const OBSTACLE_HEIGHT = 31;
 const OBSTACLE_GAP = 220;
 let obstacleTimer = 0;
 
@@ -83,19 +83,10 @@ window.addEventListener("keydown", (e) => {
 
 // ====== Preload images ======
 const fgBuildingFiles = [
-    "fg_building1.png",
-    "fg_building2.png",
-    "fg_building3.png",
-    "fg_building4.png",
-    "fg_building5.png"
+    "fg_building1.png","fg_building2.png","fg_building3.png","fg_building4.png","fg_building5.png"
 ];
-
 const bgBuildingFiles = [
-    "bg_building1.png",
-    "bg_building2.png",
-    "bg_building3.png",
-    "bg_building4.png",
-    "bg_building5.png"
+    "bg_building1.png","bg_building2.png","bg_building3.png","bg_building4.png","bg_building5.png"
 ];
 
 const imagesToLoad = [
@@ -103,18 +94,16 @@ const imagesToLoad = [
     { name: "granny", src: "assets/granny_jump.png" },
     { name: "clouds", src: "assets/clouds.png" },
     { name: "font", src: "assets/font.png" },
-    { name: "cone", src: "assets/cone.png" } // new obstacle image
+    { name: "cone", src: "assets/cone.png" } 
 ];
 
 fgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"fg"+(i+1),src:"assets/"+f}));
 bgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"bg"+(i+1),src:"assets/"+f}));
 
 let loadedCount = 0;
-
 imagesToLoad.forEach(imgData=>{
     const img = new Image();
     img.src = imgData.src;
-
     img.onload = ()=>{
         loadedCount++;
         if (loadedCount === imagesToLoad.length){
@@ -122,7 +111,6 @@ imagesToLoad.forEach(imgData=>{
             requestAnimationFrame(loop);
         }
     };
-
     images[imgData.name] = img;
 });
 
@@ -134,261 +122,138 @@ let foregroundBuildings = [];
 function initLayers(){
     cloudsLayer.image = images.clouds;
 
-    // distant buildings
     let xPos = 0;
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
         const img = images["bg"+idx];
-        distantBuildings.push({
-            image: img,
-            x: xPos,
-            y: HEIGHT - STREET_HEIGHT - img.height - 40
-        });
+        distantBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
         xPos += img.width;
     }
 
-    // foreground buildings
     xPos = 0;
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
         const img = images["fg"+idx];
-        foregroundBuildings.push({
-            image: img,
-            x: xPos,
-            y: ROAD_TOP - img.height
-        });
+        foregroundBuildings.push({ image: img, x: xPos, y: ROAD_TOP - img.height });
         xPos += img.width;
     }
 }
 
 // Collision check
 function checkCollision(a, b){
-    return (
-        a.x < b.x + b.width &&
-        a.x + a.width > b.x &&
-        a.y < b.y + b.height &&
-        a.y + a.height > b.y
-    );
+    return (a.x < b.x + b.width &&
+            a.x + a.width > b.x &&
+            a.y < b.y + b.height &&
+            a.y + a.height > b.y);
 }
 
 // ====== Start game ======
-function startGame(){
-    gameState = STATE.PLAYING;
-}
+function startGame(){ gameState = STATE.PLAYING; }
 
 // ====== Main loop ======
-function loop(){
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
 
 // ====== Update ======
 function update(){
-
-    blinkTimer++;
-    if (blinkTimer > 25){
-        blinkTimer = 0;
-        showBlink = !showBlink;
-    }
-
-    if (gameState !== STATE.PLAYING) return;
-
+    blinkTimer++; if(blinkTimer>25){ blinkTimer=0; showBlink=!showBlink; }
+    if(gameState !== STATE.PLAYING) return;
     granny.frameTimer++;
 
     // Jump logic
-    if (granny.state === "anticipation"){
-        granny.frame = 1;
-        if (granny.frameTimer > 5){
-            granny.vy = granny.jumpPower;
-            granny.state = "jump";
-            granny.frameTimer = 0;
-        }
-    }
-    else if (granny.state === "jump"){
-        granny.vy += granny.gravity;
-        granny.feetY += granny.vy;
+    if(granny.state==="anticipation"){
+        granny.frame=1;
+        if(granny.frameTimer>5){ granny.vy=granny.jumpPower; granny.state="jump"; granny.frameTimer=0; }
+    } else if(granny.state==="jump"){
+        granny.vy+=granny.gravity; granny.feetY+=granny.vy;
+        if(granny.vy<-6) granny.frame=2; else if(granny.vy<-2) granny.frame=3; else if(granny.vy<0) granny.frame=4; else granny.frame=5;
+        if(granny.feetY>=GROUND_Y){ granny.feetY=GROUND_Y; granny.vy=0; granny.state="landing"; granny.frame=6; granny.frameTimer=0; granny.grounded=true; } else granny.grounded=false;
+    } else if(granny.state==="landing"){
+        if(granny.frameTimer>4){ granny.frame++; granny.frameTimer=0; if(granny.frame>8){ granny.frame=0; granny.state="idle"; } }
+    } else if(granny.state==="idle"){ granny.frame=0; granny.grounded=true; }
 
-        if (granny.vy < -6) granny.frame = 2;
-        else if (granny.vy < -2) granny.frame = 3;
-        else if (granny.vy < 0) granny.frame = 4;
-        else granny.frame = 5;
+    const grannyBox = { x:granny.x+GRANNY_HITBOX.x, y:(granny.feetY-granny.height)+GRANNY_HITBOX.y, width:GRANNY_HITBOX.width, height:GRANNY_HITBOX.height };
 
-        if (granny.feetY >= GROUND_Y){
-            granny.feetY = GROUND_Y;
-            granny.vy = 0;
-            granny.state = "landing";
-            granny.frame = 6;
-            granny.frameTimer = 0;
-            granny.grounded = true;
-        } else {
-            granny.grounded = false;
-        }
-    }
-    else if (granny.state === "landing"){
-        if (granny.frameTimer > 4){
-            granny.frame++;
-            granny.frameTimer = 0;
-            if (granny.frame > 8){
-                granny.frame = 0;
-                granny.state = "idle";
-            }
-        }
-    }
-    else if (granny.state === "idle"){
-        granny.frame = 0;
-        granny.grounded = true;
-    }
-
-    const grannyBox = {
-        x: granny.x + GRANNY_HITBOX.x,
-        y: (granny.feetY - granny.height) + GRANNY_HITBOX.y,
-        width: GRANNY_HITBOX.width,
-        height: GRANNY_HITBOX.height
-    };
-
-    // Clouds
-    cloudsLayer.x -= speed * 0.05;
-    if (cloudsLayer.x <= -cloudsLayer.image.width)
-        cloudsLayer.x += cloudsLayer.image.width;
-
-    // Distant buildings
-    distantBuildings.forEach(b => b.x -= speed * 0.2);
-    if (distantBuildings[0].x + distantBuildings[0].image.width < 0){
+    cloudsLayer.x-=speed*0.05; if(cloudsLayer.x<=-cloudsLayer.image.width) cloudsLayer.x+=cloudsLayer.image.width;
+    distantBuildings.forEach(b=>b.x-=speed*0.2); 
+    if(distantBuildings[0].x + distantBuildings[0].image.width < 0){
         distantBuildings.shift();
-        const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
-        const img = images["bg"+idx];
-        const last = distantBuildings[distantBuildings.length-1];
-        distantBuildings.push({
-            image: img,
-            x: last.x + last.image.width,
-            y: HEIGHT - STREET_HEIGHT - img.height - 40
-        });
+        const idx=Math.floor(Math.random()*bgBuildingFiles.length)+1;
+        const img=images["bg"+idx]; 
+        const last=distantBuildings[distantBuildings.length-1];
+        distantBuildings.push({ image: img, x: last.x+last.image.width, y: HEIGHT-STREET_HEIGHT-img.height-40 });
     }
 
-    // Foreground buildings
-    foregroundBuildings.forEach(b => b.x -= speed * 0.8);
-    if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
+    foregroundBuildings.forEach(b=>b.x-=speed*0.8);
+    if(foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
         foregroundBuildings.shift();
-        const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
-        const img = images["fg"+idx];
-        const last = foregroundBuildings[foregroundBuildings.length-1];
-        foregroundBuildings.push({
-            image: img,
-            x: last.x + last.image.width,
-            y: ROAD_TOP - img.height
-        });
+        const idx=Math.floor(Math.random()*fgBuildingFiles.length)+1;
+        const img=images["fg"+idx]; 
+        const last=foregroundBuildings[foregroundBuildings.length-1];
+        foregroundBuildings.push({ image: img, x: last.x+last.image.width, y: ROAD_TOP-img.height });
     }
 
     // Spawn obstacles
-    obstacleTimer++;
-    if (obstacleTimer > OBSTACLE_GAP){
-        obstacleTimer = 0;
-        obstacles.push({
-            x: WIDTH,
-            y: GROUND_Y - OBSTACLE_HEIGHT,
-            width: OBSTACLE_WIDTH,
-            height: OBSTACLE_HEIGHT
-        });
+    obstacleTimer++; 
+    if(obstacleTimer>OBSTACLE_GAP){ 
+        obstacleTimer=0; 
+        obstacles.push({ x:WIDTH, y:GROUND_Y-OBSTACLE_HEIGHT, width:OBSTACLE_WIDTH, height:OBSTACLE_HEIGHT }); 
     }
 
-    // Move obstacles and collision
-    obstacles.forEach(o => o.x -= speed);
-    while (obstacles.length && obstacles[0].x + obstacles[0].width < 0){
-        obstacles.shift();
-    }
+    // Move obstacles
+    obstacles.forEach(o=>o.x-=speed);
+    while(obstacles.length && obstacles[0].x+obstacles[0].width<0) obstacles.shift();
 
-    for (let o of obstacles){
-        if (checkCollision(grannyBox, o)){
-            gameState = STATE.GAMEOVER;
-            break;
-        }
-    }
+    // Collision
+    for(let o of obstacles){ if(checkCollision(grannyBox,o)){ gameState=STATE.GAMEOVER; break; } }
 }
 
 // ====== Draw ======
 function draw(){
-    ctx.fillStyle="#8dc2e3";
-    ctx.fillRect(0,0,WIDTH,HEIGHT);
-
-    if (gameState===STATE.TITLE) drawTitle();
-    else if (gameState===STATE.PLAYING || gameState===STATE.GAMEOVER) drawGame();
-
-    if (gameState === STATE.GAMEOVER){
-        drawBitmapText("GAME OVER",130,120);
-    }
+    ctx.fillStyle="#8dc2e3"; ctx.fillRect(0,0,WIDTH,HEIGHT);
+    if(gameState===STATE.TITLE) drawTitle(); else drawGame();
+    if(gameState===STATE.GAMEOVER) drawBitmapText("GAME OVER",130,120);
 }
 
-// ====== Bitmap font ======
-function drawBitmapText(text,x,y){
-    text = text.toUpperCase();
-    if (!images.font.complete) return;
-
-    const spacing = 1;
-    for (let i=0;i<text.length;i++){
-        const ch = text[i];
-        const index = bitmapFont.chars.indexOf(ch);
-        if (index===-1) continue;
-        const sx = index * bitmapFont.charWidth;
-        ctx.drawImage(
-            images.font,
-            sx,0,
-            bitmapFont.charWidth, bitmapFont.charHeight,
-            x+i*(bitmapFont.charWidth+spacing), y,
-            bitmapFont.charWidth, bitmapFont.charHeight
-        );
-    }
-}
-
-// ====== Title ======
+// ====== Draw title ======
 function drawTitle(){
-    ctx.fillStyle="black";
-    ctx.fillRect(0,0,WIDTH,HEIGHT);
-
-    const img = images.title;
-    if (img.complete){
-        const x = Math.floor((WIDTH-363)/2);
-        const y = Math.floor((HEIGHT-222)/2-10);
-        ctx.drawImage(img,x,y);
-    }
-
-    if (showBlink)
-        drawBitmapText("PRESS BUTTON TO START",20,250);
+    ctx.fillStyle="black"; ctx.fillRect(0,0,WIDTH,HEIGHT);
+    const img=images.title;
+    if(img.complete){ ctx.drawImage(img, Math.floor((WIDTH-363)/2), Math.floor((HEIGHT-222)/2-10)); }
+    if(showBlink) drawBitmapText("PRESS BUTTON TO START",20,250);
 }
 
-// ====== Game ======
-let lineOffset = 0;
-
+// ====== Draw game ======
+let lineOffset=0;
 function drawGame(){
     ctx.drawImage(cloudsLayer.image,cloudsLayer.x,cloudsLayer.y);
     ctx.drawImage(cloudsLayer.image,cloudsLayer.x+cloudsLayer.image.width,cloudsLayer.y);
-
     distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
     foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
 
     // road
-    ctx.fillStyle="#867e7c";
-    ctx.fillRect(0, ROAD_TOP, WIDTH, STREET_HEIGHT + ROAD_EXTENSION);
-    drawRoadLine();
+    ctx.fillStyle="#867e7c"; ctx.fillRect(0,ROAD_TOP,WIDTH,STREET_HEIGHT+ROAD_EXTENSION); drawRoadLine();
 
-    // obstacles (cone images)
-    obstacles.forEach(o=>{
-        ctx.drawImage(images.cone, o.x, o.y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT);
-    });
+    // obstacles
+    obstacles.forEach(o=>ctx.drawImage(images.cone,o.x,o.y,OBSTACLE_WIDTH,OBSTACLE_HEIGHT));
 
     // granny
-    const drawY = granny.feetY - granny.height;
-    const sx = granny.frame * granny.width;
-    ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
+    const drawY=granny.feetY-granny.height;
+    const sx=granny.frame*granny.width;
+    ctx.drawImage(images.granny,sx,0,granny.width,granny.height,granny.x,drawY,granny.width,granny.height);
 }
 
 // ====== Road line ======
-function drawRoadLine(){
-    lineOffset -= speed;
-    if (lineOffset < -24) lineOffset = 0;
+function drawRoadLine(){ lineOffset-=speed; if(lineOffset<-24) lineOffset=0;
+    ctx.fillStyle="#fef752"; for(let i=0;i<WIDTH/24+2;i++) ctx.fillRect(i*24+lineOffset,HEIGHT-25,12,3);
+}
 
-    ctx.fillStyle="#fef752";
-    for(let i=0;i<WIDTH/24+2;i++){
-        ctx.fillRect(i*24 + lineOffset, HEIGHT - 25, 12, 3);
+// ====== Bitmap font ======
+function drawBitmapText(text,x,y){
+    text=text.toUpperCase(); if(!images.font.complete) return;
+    const spacing=1;
+    for(let i=0;i<text.length;i++){
+        const ch=text[i]; const index=bitmapFont.chars.indexOf(ch); if(index===-1) continue;
+        const sx=index*bitmapFont.charWidth;
+        ctx.drawImage(images.font,sx,0,bitmapFont.charWidth,bitmapFont.charHeight,x+i*(bitmapFont.charWidth+spacing),y,bitmapFont.charWidth,bitmapFont.charHeight);
     }
 }
