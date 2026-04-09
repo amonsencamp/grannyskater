@@ -6,24 +6,23 @@ const ctx = canvas.getContext("2d");
 
 // Disable smoothing for pixel art
 ctx.imageSmoothingEnabled = false;
-ctx.webkitImageSmoothingEnabled = false;
-ctx.mozImageSmoothingEnabled = false;
-ctx.msImageSmoothingEnabled = false;
 
 // Canvas size
 const WIDTH = 400;
 const HEIGHT = 300;
 
 const STREET_HEIGHT = 30;
-const ROAD_EXTENSION = 50; // raises granny + road
-const BASELINE_INSET = 45; // how far granny sits into the road
+const ROAD_EXTENSION = 50;
+const BASELINE_INSET = 45;
+
+const ROAD_TOP = HEIGHT - STREET_HEIGHT - ROAD_EXTENSION;
+const GROUND_Y = ROAD_TOP + BASELINE_INSET;
 
 // Game states
 const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
 let gameState = STATE.TITLE;
 
-// Blink timer for title screen
-let lastTime = 0;
+// Blink timer
 let blinkTimer = 0;
 let showBlink = true;
 
@@ -43,7 +42,7 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-    feetY: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION + BASELINE_INSET,
+    feetY: GROUND_Y,
     width: 106,
     height: 150,
     vy: 0,
@@ -131,7 +130,7 @@ function initLayers(){
 
     cloudsLayer.image = images.clouds;
 
-    // distant buildings (unchanged)
+    // distant buildings
     let xPos = 0;
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
@@ -146,7 +145,7 @@ function initLayers(){
         xPos += img.width;
     }
 
-    // foreground buildings (moved up)
+    // foreground buildings
     xPos = 0;
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
@@ -155,7 +154,7 @@ function initLayers(){
         foregroundBuildings.push({
             image: img,
             x: xPos,
-            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION - img.height
+            y: ROAD_TOP - img.height
         });
 
         xPos += img.width;
@@ -168,38 +167,31 @@ function startGame(){
 }
 
 // ====== Main loop ======
-function loop(timestamp){
-
-    const delta = timestamp - lastTime;
-    lastTime = timestamp;
-
-    update(delta);
+function loop(){
+    update();
     draw();
-
     requestAnimationFrame(loop);
 }
 
 // ====== Update ======
-function update(delta){
+function update(){
 
-    blinkTimer += delta;
-    if (blinkTimer > 400){
+    blinkTimer++;
+    if (blinkTimer > 25){
         blinkTimer = 0;
         showBlink = !showBlink;
     }
 
     if (gameState !== STATE.PLAYING) return;
 
-    granny.frameTimer += delta;
-
-    const GROUND_Y = HEIGHT - STREET_HEIGHT - ROAD_EXTENSION + BASELINE_INSET;
+    granny.frameTimer++;
 
     // Jump logic
     if (granny.state === "anticipation"){
 
         granny.frame = 1;
 
-        if (granny.frameTimer > 80){
+        if (granny.frameTimer > 5){
             granny.vy = granny.jumpPower;
             granny.state = "jump";
             granny.frameTimer = 0;
@@ -230,7 +222,7 @@ function update(delta){
 
     else if (granny.state === "landing"){
 
-        if (granny.frameTimer > 60){
+        if (granny.frameTimer > 4){
             granny.frame++;
             granny.frameTimer = 0;
 
@@ -283,19 +275,19 @@ function update(delta){
         foregroundBuildings.push({
             image: img,
             x: last.x + last.image.width,
-            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION - img.height
+            y: ROAD_TOP - img.height
         });
     }
 
-    // Spawn obstacles
-    obstacleTimer += speed;
+    // Spawn obstacles (frame-based spacing)
+    obstacleTimer++;
 
     if (obstacleTimer > OBSTACLE_GAP){
         obstacleTimer = 0;
 
         obstacles.push({
             x: WIDTH,
-            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION + BASELINE_INSET - OBSTACLE_HEIGHT,
+            y: GROUND_Y - OBSTACLE_HEIGHT,
             width: OBSTACLE_WIDTH,
             height: OBSTACLE_HEIGHT
         });
@@ -304,7 +296,8 @@ function update(delta){
     // Move obstacles
     obstacles.forEach(o => o.x -= speed);
 
-    if (obstacles.length && obstacles[0].x + obstacles[0].width < 0){
+    // Remove offscreen
+    while (obstacles.length && obstacles[0].x + obstacles[0].width < 0){
         obstacles.shift();
     }
 }
@@ -368,19 +361,17 @@ let lineOffset = 0;
 
 function drawGame(){
 
-    // clouds
     ctx.drawImage(cloudsLayer.image,cloudsLayer.x,cloudsLayer.y);
     ctx.drawImage(cloudsLayer.image,cloudsLayer.x+cloudsLayer.image.width,cloudsLayer.y);
 
-    // buildings
     distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
     foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
 
-    // road (extended upward)
+    // road
     ctx.fillStyle="#867e7c";
     ctx.fillRect(
         0,
-        HEIGHT - STREET_HEIGHT - ROAD_EXTENSION,
+        ROAD_TOP,
         WIDTH,
         STREET_HEIGHT + ROAD_EXTENSION
     );
