@@ -13,7 +13,9 @@ ctx.msImageSmoothingEnabled = false;
 // Canvas size
 const WIDTH = 400;
 const HEIGHT = 300;
+
 const STREET_HEIGHT = 30;
+const ROAD_EXTENSION = 50; // raises granny + road
 
 // Game states
 const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
@@ -38,32 +40,32 @@ const bitmapFont = {
 };
 
 // Granny
-const BASELINE_OFFSET = 20; // lowered baseline
 const granny = {
     x: 30,
-    feetY: HEIGHT - STREET_HEIGHT + BASELINE_OFFSET,
+    feetY: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION,
     width: 106,
     height: 150,
     vy: 0,
     gravity: 0.5,
-    jumpPower: -5,
+    jumpPower: -11,
     grounded: true,
     frame: 0,
     frameTimer: 0,
-    state: "idle" // idle, anticipation, jump, landing
+    state: "idle"
 };
 
 // Obstacles
 const obstacles = [];
 const OBSTACLE_WIDTH = 20;
-const OBSTACLE_HEIGHT = 100;
-const OBSTACLE_GAP = 220; // distance between obstacles
+const OBSTACLE_HEIGHT = 50;
+const OBSTACLE_GAP = 220;
 let obstacleTimer = 0;
 
 // Input
 window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
-        if (gameState === STATE.TITLE) {
+
+        if (gameState === STATE.TITLE){
             startGame();
             return;
         }
@@ -76,8 +78,21 @@ window.addEventListener("keydown", (e) => {
 });
 
 // ====== Preload images ======
-const fgBuildingFiles = ["fg_building1.png","fg_building2.png","fg_building3.png","fg_building4.png","fg_building5.png"];
-const bgBuildingFiles = ["bg_building1.png","bg_building2.png","bg_building3.png","bg_building4.png","bg_building5.png"];
+const fgBuildingFiles = [
+"fg_building1.png",
+"fg_building2.png",
+"fg_building3.png",
+"fg_building4.png",
+"fg_building5.png"
+];
+
+const bgBuildingFiles = [
+"bg_building1.png",
+"bg_building2.png",
+"bg_building3.png",
+"bg_building4.png",
+"bg_building5.png"
+];
 
 const imagesToLoad = [
     { name: "title", src: "assets/titlescreen.png" },
@@ -90,9 +105,11 @@ fgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"fg"+(i+1),src:"assets/"+
 bgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"bg"+(i+1),src:"assets/"+f}));
 
 let loadedCount = 0;
+
 imagesToLoad.forEach(imgData=>{
     const img = new Image();
     img.src = imgData.src;
+
     img.onload = ()=>{
         loadedCount++;
         if (loadedCount === imagesToLoad.length){
@@ -100,45 +117,58 @@ imagesToLoad.forEach(imgData=>{
             requestAnimationFrame(loop);
         }
     };
+
     images[imgData.name] = img;
 });
 
 // ====== Background layers ======
-let cloudsLayer = { image: null, x:0, y:20, speedMult:0 };
+let cloudsLayer = { image:null, x:0, y:20 };
 let distantBuildings = [];
 let foregroundBuildings = [];
 
 function initLayers(){
+
     cloudsLayer.image = images.clouds;
 
-    // distant buildings
+    // distant buildings (unchanged)
     let xPos = 0;
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
         const img = images["bg"+idx];
-        distantBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height-40 });
+
+        distantBuildings.push({
+            image: img,
+            x: xPos,
+            y: HEIGHT - STREET_HEIGHT - img.height - 40
+        });
+
         xPos += img.width;
     }
 
-// foreground buildings
-xPos = 0;
-while(xPos < WIDTH + 200){
-    const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
-    const img = images["fg"+idx];
-    foregroundBuildings.push({ 
-        image:img, 
-        x:xPos, 
-        y:HEIGHT-STREET_HEIGHT-img.height 
-    });
-    xPos += img.width;
-}
+    // foreground buildings (moved up)
+    xPos = 0;
+    while(xPos < WIDTH + 200){
+        const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
+        const img = images["fg"+idx];
+
+        foregroundBuildings.push({
+            image: img,
+            x: xPos,
+            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION - img.height
+        });
+
+        xPos += img.width;
+    }
 }
 
 // ====== Start game ======
-function startGame(){ gameState = STATE.PLAYING; }
+function startGame(){
+    gameState = STATE.PLAYING;
+}
 
 // ====== Main loop ======
 function loop(timestamp){
+
     const delta = timestamp - lastTime;
     lastTime = timestamp;
 
@@ -150,6 +180,7 @@ function loop(timestamp){
 
 // ====== Update ======
 function update(delta){
+
     blinkTimer += delta;
     if (blinkTimer > 400){
         blinkTimer = 0;
@@ -159,25 +190,30 @@ function update(delta){
     if (gameState !== STATE.PLAYING) return;
 
     granny.frameTimer += delta;
-    const GROUND_Y = HEIGHT - STREET_HEIGHT + BASELINE_OFFSET;
 
-    // --- Jump physics and animation ---
+    const GROUND_Y = HEIGHT - STREET_HEIGHT - ROAD_EXTENSION;
+
+    // Jump logic
     if (granny.state === "anticipation"){
+
         granny.frame = 1;
+
         if (granny.frameTimer > 80){
             granny.vy = granny.jumpPower;
             granny.state = "jump";
             granny.frameTimer = 0;
         }
     }
+
     else if (granny.state === "jump"){
+
         granny.vy += granny.gravity;
         granny.feetY += granny.vy;
 
         if (granny.vy < -6) granny.frame = 2;
         else if (granny.vy < -2) granny.frame = 3;
-        else if (granny.vy < 0)  granny.frame = 4;
-        else                     granny.frame = 5;
+        else if (granny.vy < 0) granny.frame = 4;
+        else granny.frame = 5;
 
         if (granny.feetY >= GROUND_Y){
             granny.feetY = GROUND_Y;
@@ -190,74 +226,91 @@ function update(delta){
             granny.grounded = false;
         }
     }
+
     else if (granny.state === "landing"){
-        if (granny.frameTimer > 60){ // landing twice as fast
+
+        if (granny.frameTimer > 60){
             granny.frame++;
             granny.frameTimer = 0;
+
             if (granny.frame > 8){
                 granny.frame = 0;
                 granny.state = "idle";
             }
         }
     }
+
     else if (granny.state === "idle"){
         granny.frame = 0;
         granny.grounded = true;
     }
 
-    // --- Clouds ---
-    cloudsLayer.x -= speed*0.05;
-    if (cloudsLayer.x <= -cloudsLayer.image.width) cloudsLayer.x += cloudsLayer.image.width;
+    // Clouds
+    cloudsLayer.x -= speed * 0.05;
+    if (cloudsLayer.x <= -cloudsLayer.image.width)
+        cloudsLayer.x += cloudsLayer.image.width;
 
-    // --- Distant buildings ---
-    distantBuildings.forEach(b=>b.x -= speed*0.2);
+    // Distant buildings
+    distantBuildings.forEach(b => b.x -= speed * 0.2);
+
     if (distantBuildings[0].x + distantBuildings[0].image.width < 0){
+
         distantBuildings.shift();
+
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
         const img = images["bg"+idx];
         const last = distantBuildings[distantBuildings.length-1];
-        distantBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height-40 });
+
+        distantBuildings.push({
+            image: img,
+            x: last.x + last.image.width,
+            y: HEIGHT - STREET_HEIGHT - img.height - 40
+        });
     }
 
-    // --- Foreground buildings ---
-    foregroundBuildings.forEach(b=>b.x -= speed*0.8);
- if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
-    foregroundBuildings.shift();
-    const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
-    const img = images["fg"+idx];
-    const last = foregroundBuildings[foregroundBuildings.length-1];
-    foregroundBuildings.push({ 
-        image:img, 
-        x:last.x+last.image.width, 
-        y:HEIGHT-STREET_HEIGHT-img.height
-    });
-}
-    // --- Spawn obstacles ---
-obstacleTimer += speed;
-if (obstacleTimer > OBSTACLE_GAP) {
-    obstacleTimer = 0;
+    // Foreground buildings
+    foregroundBuildings.forEach(b => b.x -= speed * 0.8);
 
-    obstacles.push({
-        x: WIDTH,
-        y: HEIGHT - STREET_HEIGHT - OBSTACLE_HEIGHT,
-        width: OBSTACLE_WIDTH,
-        height: OBSTACLE_HEIGHT
-    });
-}
+    if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
 
-    // --- Move obstacles ---
-obstacles.forEach(o => o.x -= speed);
+        foregroundBuildings.shift();
 
-// remove offscreen
-if (obstacles.length && obstacles[0].x + obstacles[0].width < 0) {
-    obstacles.shift();
-}
+        const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
+        const img = images["fg"+idx];
+        const last = foregroundBuildings[foregroundBuildings.length-1];
 
-    
+        foregroundBuildings.push({
+            image: img,
+            x: last.x + last.image.width,
+            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION - img.height
+        });
+    }
+
+    // Spawn obstacles
+    obstacleTimer += speed;
+
+    if (obstacleTimer > OBSTACLE_GAP){
+        obstacleTimer = 0;
+
+        obstacles.push({
+            x: WIDTH,
+            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION - OBSTACLE_HEIGHT,
+            width: OBSTACLE_WIDTH,
+            height: OBSTACLE_HEIGHT
+        });
+    }
+
+    // Move obstacles
+    obstacles.forEach(o => o.x -= speed);
+
+    if (obstacles.length && obstacles[0].x + obstacles[0].width < 0){
+        obstacles.shift();
+    }
 }
 
 // ====== Draw ======
 function draw(){
+
     ctx.fillStyle="#8dc2e3";
     ctx.fillRect(0,0,WIDTH,HEIGHT);
 
@@ -267,16 +320,20 @@ function draw(){
 
 // ====== Bitmap font ======
 function drawBitmapText(text,x,y){
+
     text = text.toUpperCase();
     if (!images.font.complete) return;
 
     const spacing = 1;
+
     for (let i=0;i<text.length;i++){
+
         const ch = text[i];
         const index = bitmapFont.chars.indexOf(ch);
         if (index===-1) continue;
 
-        const sx = index*bitmapFont.charWidth;
+        const sx = index * bitmapFont.charWidth;
+
         ctx.drawImage(
             images.font,
             sx,0,
@@ -289,10 +346,12 @@ function drawBitmapText(text,x,y){
 
 // ====== Title ======
 function drawTitle(){
+
     ctx.fillStyle="black";
     ctx.fillRect(0,0,WIDTH,HEIGHT);
 
     const img = images.title;
+
     if (img.complete){
         const x = Math.floor((WIDTH-363)/2);
         const y = Math.floor((HEIGHT-222)/2-10);
@@ -304,44 +363,62 @@ function drawTitle(){
 }
 
 // ====== Game ======
-let lineOffset=0;
+let lineOffset = 0;
 
 function drawGame(){
+
+    // clouds
     ctx.drawImage(cloudsLayer.image,cloudsLayer.x,cloudsLayer.y);
     ctx.drawImage(cloudsLayer.image,cloudsLayer.x+cloudsLayer.image.width,cloudsLayer.y);
 
+    // buildings
     distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
     foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
 
+    // road (extended upward)
     ctx.fillStyle="#867e7c";
-    ctx.fillRect(0,HEIGHT-STREET_HEIGHT,WIDTH,STREET_HEIGHT);
+    ctx.fillRect(
+        0,
+        HEIGHT - STREET_HEIGHT - ROAD_EXTENSION,
+        WIDTH,
+        STREET_HEIGHT + ROAD_EXTENSION
+    );
 
     drawRoadLine();
-// draw obstacles
-ctx.fillStyle = "#ff3b3b";
-obstacles.forEach(o => {
-    ctx.fillRect(o.x, o.y, o.width, o.height);
-});
-    // draw granny
+
+    // obstacles
+    ctx.fillStyle="#ff3b3b";
+    obstacles.forEach(o=>{
+        ctx.fillRect(o.x,o.y,o.width,o.height);
+    });
+
+    // granny
     const drawY = granny.feetY - granny.height;
     const sx = granny.frame * granny.width;
 
     ctx.drawImage(
         images.granny,
-        sx, 0,
-        granny.width, granny.height,
-        granny.x, drawY,
-        granny.width, granny.height
+        sx,0,
+        granny.width,granny.height,
+        granny.x,drawY,
+        granny.width,granny.height
     );
 }
 
 // ====== Road line ======
 function drawRoadLine(){
+
     lineOffset -= speed;
-    if (lineOffset<-24) lineOffset=0;
+    if (lineOffset < -24) lineOffset = 0;
 
     ctx.fillStyle="#fef752";
+
     for(let i=0;i<WIDTH/24+2;i++){
-        ctx.fillRect(i*24+lineOffset,HEIGHT-15,12,3);
+        ctx.fillRect(
+            i*24 + lineOffset,
+            HEIGHT - 15,
+            12,
+            3
+        );
     }
 }
