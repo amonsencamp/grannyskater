@@ -372,14 +372,14 @@ function drawGame(){
   });
 
   // granny shadow
-  const shadowY = GROUND_Y + 1; // just below feet
+  const shadowY = GROUND_Y - 2; // just below feet
   let shadowAlpha = 0.3; // default on ground
   if (!granny.grounded){
     const jumpHeight = GROUND_Y - granny.feetY;
     shadowAlpha = Math.max(0.01, 0.3 - 0.29 * (jumpHeight / 150)); // fade with height
   }
   ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
-  ctx.fillRect(granny.x + 33, shadowY, 70, 2); // centered under granny
+  ctx.fillRect(granny.x + 33, shadowY, 70, 4); // centered under granny
 
   // granny
   const drawY = granny.feetY - granny.height;
