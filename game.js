@@ -16,6 +16,7 @@ const HEIGHT = 300;
 
 const STREET_HEIGHT = 30;
 const ROAD_EXTENSION = 50; // raises granny + road
+const BASELINE_INSET = 15; // how far granny sits into the road
 
 // Game states
 const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
@@ -42,7 +43,7 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-    feetY: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION,
+    feetY: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION + BASELINE_INSET,
     width: 106,
     height: 150,
     vy: 0,
@@ -191,7 +192,7 @@ function update(delta){
 
     granny.frameTimer += delta;
 
-    const GROUND_Y = HEIGHT - STREET_HEIGHT - ROAD_EXTENSION;
+    const GROUND_Y = HEIGHT - STREET_HEIGHT - ROAD_EXTENSION + BASELINE_INSET;
 
     // Jump logic
     if (granny.state === "anticipation"){
@@ -294,7 +295,7 @@ function update(delta){
 
         obstacles.push({
             x: WIDTH,
-            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION - OBSTACLE_HEIGHT,
+            y: HEIGHT - STREET_HEIGHT - ROAD_EXTENSION + BASELINE_INSET - OBSTACLE_HEIGHT,
             width: OBSTACLE_WIDTH,
             height: OBSTACLE_HEIGHT
         });
