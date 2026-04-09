@@ -113,17 +113,18 @@ function initLayers(){
         xPos += img.width;
     }
 
-  // foreground buildings
+// foreground buildings
 xPos = 0;
 while(xPos < WIDTH + 200){
     const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
     const img = images["fg"+idx];
-    foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-img.height }); // flush with street
+    foregroundBuildings.push({ 
+        image:img, 
+        x:xPos, 
+        y:HEIGHT-STREET_HEIGHT-img.height 
+    });
     xPos += img.width;
 }
-
-// Later, when recycling:
-foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-img.height }); // flush with street
 }
 
 // ====== Start game ======
@@ -213,13 +214,17 @@ function update(delta){
 
     // --- Foreground buildings ---
     foregroundBuildings.forEach(b=>b.x -= speed*0.8);
-    if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
-        foregroundBuildings.shift();
-        const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
-        const img = images["fg"+idx];
-        const last = foregroundBuildings[foregroundBuildings.length-1];
-        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-BASELINE_OFFSET-img.height }); // <-- fixed
-    }
+ if (foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
+    foregroundBuildings.shift();
+    const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
+    const img = images["fg"+idx];
+    const last = foregroundBuildings[foregroundBuildings.length-1];
+    foregroundBuildings.push({ 
+        image:img, 
+        x:last.x+last.image.width, 
+        y:HEIGHT-STREET_HEIGHT-img.height
+    });
+}
 }
 
 // ====== Draw ======
