@@ -40,7 +40,7 @@ const bitmapFont = {
 // Granny
 const granny = {
     x: 30,
-    feetY: HEIGHT - STREET_HEIGHT,
+    feetY: HEIGHT - STREET_HEIGHT + 20, // baseline lowered 20px
     width: 106,
     height: 150,
     vy: 0,
@@ -107,7 +107,7 @@ function initLayers(){
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
         const img = images["bg"+idx];
-        distantBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-img.height-40 });
+        distantBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-20-img.height-40 }); // adjusted baseline
         xPos += img.width;
     }
 
@@ -115,7 +115,7 @@ function initLayers(){
     while(xPos < WIDTH + 200){
         const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
         const img = images["fg"+idx];
-        foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-img.height });
+        foregroundBuildings.push({ image:img, x:xPos, y:HEIGHT-STREET_HEIGHT-20-img.height }); // adjusted baseline
         xPos += img.width;
     }
 }
@@ -144,9 +144,11 @@ function update(delta){
 
     if (gameState !== STATE.PLAYING) return;
 
-    // --- Jump physics and animation ---
     granny.frameTimer += delta;
 
+    const GROUND_Y = HEIGHT - STREET_HEIGHT + 20; // lowered baseline
+
+    // --- Jump physics and animation ---
     if (granny.state === "anticipation"){
         granny.frame = 1;
         if (granny.frameTimer > 80){
@@ -165,8 +167,8 @@ function update(delta){
         else if (granny.vy < 0)  granny.frame = 4;
         else                     granny.frame = 5;
 
-        if (granny.feetY >= HEIGHT - STREET_HEIGHT){
-            granny.feetY = HEIGHT - STREET_HEIGHT;
+        if (granny.feetY >= GROUND_Y){
+            granny.feetY = GROUND_Y;
             granny.vy = 0;
             granny.state = "landing";
             granny.frame = 6;
@@ -177,8 +179,8 @@ function update(delta){
         }
     }
     else if (granny.state === "landing"){
-        // landing frames 6-8, slower
-        if (granny.frameTimer > 60){
+        // landing frames 6-8, faster now
+        if (granny.frameTimer > 60){ // half previous duration
             granny.frame++;
             granny.frameTimer = 0;
             if (granny.frame > 8){
@@ -203,7 +205,7 @@ function update(delta){
         const idx = Math.floor(Math.random()*bgBuildingFiles.length)+1;
         const img = images["bg"+idx];
         const last = distantBuildings[distantBuildings.length-1];
-        distantBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-img.height-40 });
+        distantBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-20-img.height-40 }); // adjusted baseline
     }
 
     // --- Foreground buildings ---
@@ -213,7 +215,7 @@ function update(delta){
         const idx = Math.floor(Math.random()*fgBuildingFiles.length)+1;
         const img = images["fg"+idx];
         const last = foregroundBuildings[foregroundBuildings.length-1];
-        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-img.height });
+        foregroundBuildings.push({ image:img, x:last.x+last.image.width, y:HEIGHT-STREET_HEIGHT-20-img.height }); // adjusted baseline
     }
 }
 
