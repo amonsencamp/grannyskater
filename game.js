@@ -59,8 +59,8 @@ const GRANNY_HITBOX = { x: 40, y: 40, width: 40, height: 95 };
 
 // Obstacles
 const obstacles = [];
-const OBSTACLE_WIDTH = 20;
-const OBSTACLE_HEIGHT = 50;
+const OBSTACLE_WIDTH = 25;  // matches cone.png
+const OBSTACLE_HEIGHT = 31; // matches cone.png
 const OBSTACLE_GAP = 220;
 let obstacleTimer = 0;
 
@@ -87,6 +87,7 @@ const imagesToLoad = [
     { name: "granny", src: "assets/granny_jump.png" },
     { name: "clouds", src: "assets/clouds.png" },
     { name: "font", src: "assets/font.png" }
+    { name: "cone", src: "assets/cone.png" }
 ];
 
 fgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"fg"+(i+1),src:"assets/"+f}));
@@ -328,8 +329,9 @@ function drawGame(){
     drawRoadLine();
 
     // Obstacles
-    ctx.fillStyle="#ff3b3b";
-    obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.width,o.height));
+obstacles.forEach(o => {
+    ctx.drawImage(images.cone, o.x, o.y, OBSTACLE_WIDTH, OBSTACLE_HEIGHT);
+});
 
     // Granny
     const drawY = granny.feetY - granny.height;
