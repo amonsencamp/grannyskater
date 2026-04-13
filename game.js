@@ -54,7 +54,8 @@ const bitmapFont = {
   chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
   charWidth: 8,
   charHeight: 10,
-  stride: 9  // advance per character = charWidth + 1px gap
+  stride: 8,         // ← comma was missing
+  renderStride: 9
 };
 
 // ===== AUDIO =====
@@ -457,8 +458,8 @@ function drawScore() {
 
   // Right-align by computing pixel width and subtracting from right edge
   const MARGIN = 8;
-  const hiWidth    = hiLabel.length  * bitmapFont.stride;
-  const scoreWidth = scoreStr.length * bitmapFont.stride;
+  const hiWidth    = hiLabel.length  * bitmapFont.renderStride;
+  const scoreWidth = scoreStr.length * bitmapFont.renderStride;
 
   drawBitmapText(hiLabel,  WIDTH - MARGIN - hiWidth,    12);
   drawBitmapText(scoreStr, WIDTH - MARGIN - scoreWidth, 24);
@@ -474,7 +475,7 @@ function drawGameOverOverlay() {
   let maxWidth = 0;
   lines.forEach(line => {
     // Last char doesn't need trailing gap, so: (len-1)*stride + charWidth
-    const w = (line.length - 1) * bitmapFont.stride + bitmapFont.charWidth;
+    const w = (line.length - 1) * bitmapFont.renderStride + bitmapFont.charWidth;
     if (w > maxWidth) maxWidth = w;
   });
 
@@ -492,7 +493,7 @@ function drawGameOverOverlay() {
 
   lines.forEach((line, i) => {
     // Accurate centering using stride
-    const textWidth = (line.length - 1) * bitmapFont.stride + bitmapFont.charWidth;
+    const textWidth = (line.length - 1) * bitmapFont.renderStride + bitmapFont.charWidth;
     const tx = (WIDTH - textWidth) / 2;
     drawBitmapText(line, tx, y + padding + i * lineHeight);
   });
@@ -506,10 +507,10 @@ function drawBitmapText(text, x, y) {
     if (index === -1) continue;
     ctx.drawImage(
       images.font,
-      index * bitmapFont.charWidth, 0,      // source x, y
-      bitmapFont.charWidth, bitmapFont.charHeight, // source w, h
-      x + i * bitmapFont.stride, y,          // dest x, y
-      bitmapFont.charWidth, bitmapFont.charHeight  // dest w, h
+      index * bitmapFont.charWidth, 0,
+      bitmapFont.charWidth, bitmapFont.charHeight,
+      x + i * bitmapFont.renderStride, y,   // ← renderStride only, no +1
+      bitmapFont.charWidth, bitmapFont.charHeight
     );
   }
 }
@@ -526,7 +527,7 @@ function drawTitle() {
 
  if (showBlink) {
     const text = "PRESS SPACE TO START";
-    const textWidth = (text.length - 1) * bitmapFont.stride + bitmapFont.charWidth;
+    const textWidth = (text.length - 1) * bitmapFont.renderStride + bitmapFont.charWidth;
     drawBitmapText(text, (WIDTH - textWidth) / 2, 250);
   }
 }
