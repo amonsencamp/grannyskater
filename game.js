@@ -501,6 +501,8 @@ function drawGameOverOverlay() {
 
 // ===== BITMAP TEXT =====
 function drawBitmapText(text, x, y) {
+  x = Math.floor(x);
+  y = Math.floor(y);
   text = text.toUpperCase();
   for (let i = 0; i < text.length; i++) {
     const index = bitmapFont.chars.indexOf(text[i]);
@@ -509,11 +511,12 @@ function drawBitmapText(text, x, y) {
       images.font,
       index * bitmapFont.charWidth, 0,
       bitmapFont.charWidth, bitmapFont.charHeight,
-      x + i * bitmapFont.renderStride, y,   // ← renderStride only, no +1
+      x + i * bitmapFont.renderStride, y,
       bitmapFont.charWidth, bitmapFont.charHeight
     );
   }
 }
+
 
 // ===== TITLE =====
 function drawTitle() {
