@@ -59,13 +59,20 @@ const bitmapFont = {
 
 // ===== AUDIO =====
 const audio = {
-  title: new Audio("assets/titleloop.wav"),
-  game: new Audio("assets/song.mp3"),
-  jump: new Audio("assets/jump.wav"),
-  land: new Audio("assets/land.wav"),
-  hit: new Audio("assets/hit.wav"),
-  select: new Audio("assets/select.wav")
+  title:   new Audio("assets/titleloop.wav"),
+  game:    new Audio("assets/song.wav"),
+  jump:    new Audio("assets/jump.wav"),
+  land:    new Audio("assets/land.wav"),
+  hit:     new Audio("assets/hit.wav"),
+  select:  new Audio("assets/select.wav"),
+  speech1: new Audio("assets/speech1.mp3"),
+  speech2: new Audio("assets/speech2.mp3"),
+  speech3: new Audio("assets/speech3.mp3")
 };
+
+// Quip cooldown — prevents overlapping speech clips
+let quipCooldown = 0;
+const QUIP_COOLDOWN = 180;  // frames (~3s at 60fps)
 
 Object.values(audio).forEach(a => {
   a.preload = "auto";
@@ -241,6 +248,7 @@ function resetGame() {
 
   hasDoubleJumped = false;
   shakeFrames = 0;
+  quipCooldown = 0;
 
   lineOffset = 0;
 
@@ -380,6 +388,22 @@ function update() {
 
   obstacles.forEach(o => o.x -= currentSpeed);
 
+  // Quip cooldown tick
+  if (quipCooldown > 0) quipCooldown--;
+
+  // Near-miss: obstacle just passed granny while she was airborne
+  if (quipCooldown === 0) {
+    for (const o of obstacles) {
+      const justPassed = o.x + o.width < granny.x && o.x + o.width > granny.x - currentSpeed * 2;
+      if (justPassed && !granny.grounded) {
+        const clip = "speech" + (Math.floor(Math.random() * 3) + 1);
+        playSound(clip);
+        quipCooldown = QUIP_COOLDOWN;
+        break;
+      }
+    }
+  }
+
   // Collision detection
   for (const o of obstacles) {
     if (checkCollision(grannyBox, o)) {
@@ -428,7 +452,7 @@ function drawScore() {
   const s  = String(Math.floor(score     / 60)).padStart(2, "0");
   const hs = String(Math.floor(highScore / 60)).padStart(2, "0");
 
-  const hiLabel  = "HI SCORE " + hs;
+  const hiLabel  = "HI " + hs;
   const scoreStr = s;
 
   // Right-align by computing pixel width and subtracting from right edge
@@ -500,10 +524,8 @@ function drawTitle() {
     ctx.drawImage(img, (WIDTH - 363) / 2, (HEIGHT - 222) / 2 - 10);
   }
 
- if (showBlink) {
-    const text = "PRESS BUTTON TO START";
-    const textWidth = (text.length - 1) * bitmapFont.stride + bitmapFont.charWidth;
-    drawBitmapText(text, (WIDTH - textWidth) / 2, 250);
+  if (showBlink) {
+    drawBitmapText("PRESS BUTTON TO START", 20, 250);
   }
 }
 
@@ -521,13 +543,6 @@ function drawGame() {
   obstacles.forEach(o => {
     ctx.drawImage(images[o.name], o.x, o.y, o.width, o.height);
   });
-
-  // Shadow under granny — fades as she rises
-  const shadowY = GROUND_Y - 2;
-  const jumpHeight = GROUND_Y - granny.feetY;
-  const shadowAlpha = Math.max(0.01, 0.3 - 0.29 * (jumpHeight / 150));
-  ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
-  ctx.fillRect(granny.x + 20, shadowY, 65, 4);
 
   const drawY = granny.feetY - granny.height;
   const sx    = granny.frame * granny.width;
