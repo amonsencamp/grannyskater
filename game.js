@@ -11,9 +11,10 @@ const HEIGHT = 300;
 
 const STREET_HEIGHT = 30;
 const ROAD_EXTENSION = 50;
+const BASELINE_INSET = 45;
 
 const ROAD_TOP = HEIGHT - STREET_HEIGHT - ROAD_EXTENSION;
-const GROUND_Y = ROAD_TOP + 45;
+const GROUND_Y = ROAD_TOP + BASELINE_INSET;
 
 // Game states
 const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
@@ -28,7 +29,6 @@ let currentSpeed = 3;
 let speedTimer = 0;
 
 // Score
-let scoreFrames = 0;
 let score = 0;
 let highScore = parseInt(localStorage.getItem("grannyHighScore") || "0");
 
@@ -39,6 +39,13 @@ let showBlink = true;
 // Images
 const images = {};
 
+// Font
+const bitmapFont = {
+  chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
+  charWidth: 8,
+  charHeight: 10
+};
+
 // ===== AUDIO =====
 const audio = {
   title: new Audio("assets/titleloop.wav"),
@@ -46,20 +53,52 @@ const audio = {
   jump: new Audio("assets/jump.wav"),
   land: new Audio("assets/land.wav"),
   hit: new Audio("assets/hit.wav"),
-  select: new Audio("assets/select.wav"),
+  select: new Audio("assets/select.wav")
 };
+
+Object.values(audio).forEach(a => {
+  a.preload = "auto";
+  a.volume = 0.8;
+});
 
 audio.title.loop = true;
 audio.game.loop = true;
 
-// ===== FONT =====
-const bitmapFont = {
-  chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
-  charWidth: 8,
-  charHeight: 10
-};
+// required for browser autoplay rules
+let audioUnlocked = false;
 
-// ===== GRANNY =====
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+
+  audio.title.play().catch(()=>{});
+}
+
+function playSound(s) {
+  if (!audioUnlocked) return;
+  try {
+    audio[s].currentTime = 0;
+    audio[s].play().catch(()=>{});
+  } catch(e) {}
+}
+
+function startMusic(mode) {
+  Object.values(audio).forEach(a => {
+    if (a !== audio.jump && a !== audio.land && a !== audio.hit && a !== audio.select) {
+      a.pause();
+      a.currentTime = 0;
+    }
+  });
+
+  if (mode === "title") audio.title.play().catch(()=>{});
+  if (mode === "game") audio.game.play().catch(()=>{});
+  if (mode === "stop") {
+    audio.title.pause();
+    audio.game.pause();
+  }
+}
+
+// ===== Granny =====
 const granny = {
   x: 30,
   feetY: GROUND_Y,
@@ -74,9 +113,9 @@ const granny = {
   state: "idle"
 };
 
-const GRANNY_HITBOX = { x: 40, y: 40, width: 35, height: 95 };
+const GRANNY_HITBOX = { x:40, y:40, width:35, height:95 };
 
-// ===== OBSTACLES =====
+// Obstacles
 const obstacles = [];
 let obstacleTimer = 0;
 let nextObstacleGap = randomGap();
@@ -84,8 +123,13 @@ let nextObstacleGap = randomGap();
 // ===== INPUT =====
 window.addEventListener("keydown", (e) => {
   if (e.code !== "Space") return;
+
+  unlockAudio();
+
   if (spaceHeld) return;
   spaceHeld = true;
+
+  playSound("select");
 
   if (gameState === STATE.TITLE){
     startGame();
@@ -139,7 +183,6 @@ imagesToLoad.forEach(imgData=>{
     if (loadedCount === imagesToLoad.length){
       initLayers();
       requestAnimationFrame(loop);
-      startAudio(STATE.TITLE);
     }
   };
 
@@ -157,14 +200,22 @@ function initLayers(){
   let xPos = 0;
   while(xPos < WIDTH + 200){
     const img = images["bg"+(Math.floor(Math.random()*5)+1)];
-    distantBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
+    distantBuildings.push({
+      image: img,
+      x: xPos,
+      y: HEIGHT - STREET_HEIGHT - img.height - 40
+    });
     xPos += img.width;
   }
 
   xPos = 0;
   while(xPos < WIDTH + 200){
     const img = images["fg"+(Math.floor(Math.random()*5)+1)];
-    foregroundBuildings.push({ image: img, x: xPos, y: ROAD_TOP - img.height });
+    foregroundBuildings.push({
+      image: img,
+      x: xPos,
+      y: ROAD_TOP - img.height
+    });
     xPos += img.width;
   }
 }
@@ -188,27 +239,16 @@ function resetGame(){
   currentSpeed = 3;
   speedTimer = 0;
 
-  scoreFrames = 0;
   score = 0;
+
+  startMusic("title");
 }
 
 // ===== START =====
 function startGame(){
-  audio.select.play();
-  startAudio(STATE.PLAYING);
   gameState = STATE.PLAYING;
-}
-
-// ===== AUDIO SWITCH =====
-function startAudio(state){
-  audio.title.pause();
-  audio.game.pause();
-
-  audio.title.currentTime = 0;
-  audio.game.currentTime = 0;
-
-  if (state === STATE.TITLE) audio.title.play();
-  if (state === STATE.PLAYING) audio.game.play();
+  playSound("select");
+  startMusic("game");
 }
 
 // ===== LOOP =====
@@ -229,30 +269,26 @@ function update(){
 
   if (gameState !== STATE.PLAYING) return;
 
-  // SPEED
+  // speed ramp
   speedTimer++;
   if (speedTimer > 120){
     speedTimer = 0;
-    baseSpeed += 0.15;
+    baseSpeed += 0.2;
   }
   currentSpeed = baseSpeed;
 
-  // SCORE (SECONDS ONLY)
-  scoreFrames++;
-  score = Math.floor(scoreFrames / 60);
+  score++;
 
-  // ===== RESTORED JUMP ANIMATION (YOUR ORIGINAL LOGIC) =====
   granny.frameTimer++;
 
+  // ===== ORIGINAL ANIMATION RESTORED =====
   if (granny.state === "anticipation"){
     granny.frame = 1;
     if (granny.frameTimer > 5){
       granny.vy = granny.jumpPower;
       granny.state = "jump";
       granny.frameTimer = 0;
-
-      audio.jump.currentTime = 0;
-      audio.jump.play();
+      playSound("jump");
     }
   }
   else if (granny.state === "jump"){
@@ -271,9 +307,7 @@ function update(){
       granny.frame = 6;
       granny.frameTimer = 0;
       granny.grounded = true;
-
-      audio.land.currentTime = 0;
-      audio.land.play();
+      playSound("land");
     } else {
       granny.grounded = false;
     }
@@ -300,44 +334,48 @@ function update(){
     height: GRANNY_HITBOX.height
   };
 
-  // MOVE WORLD
+  // movement
   distantBuildings.forEach(b => b.x -= currentSpeed * 0.2);
   foregroundBuildings.forEach(b => b.x -= currentSpeed);
 
-  recycleBuildings(distantBuildings, "bg");
-  recycleBuildings(foregroundBuildings, "fg");
+  if (foregroundBuildings.length && foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
+    foregroundBuildings.shift();
+    const img = images["fg"+(Math.floor(Math.random()*5)+1)];
+    const last = foregroundBuildings[foregroundBuildings.length-1];
+    foregroundBuildings.push({ image: img, x: last.x + last.image.width, y: ROAD_TOP - img.height });
+  }
 
-  // OBSTACLES
+  if (distantBuildings.length && distantBuildings[0].x + distantBuildings[0].image.width < 0){
+    distantBuildings.shift();
+    const img = images["bg"+(Math.floor(Math.random()*5)+1)];
+    const last = distantBuildings[distantBuildings.length-1];
+    distantBuildings.push({ image: img, x: last.x + last.image.width, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
+  }
+
+  // obstacles
   obstacleTimer++;
   if (obstacleTimer > nextObstacleGap){
-    const last = obstacles[obstacles.length - 1];
-    const safeGap = granny.width + 25;
+    obstacleTimer = 0;
+    nextObstacleGap = randomGap();
 
-    if (!last || WIDTH - last.x > safeGap){
-      obstacleTimer = 0;
-      nextObstacleGap = 80 + Math.random() * 200;
+    const choice = obstacleFiles[Math.floor(Math.random()*obstacleFiles.length)];
 
-      const choice = obstacleFiles[Math.floor(Math.random()*obstacleFiles.length)];
-
-      obstacles.push({
-        x: WIDTH,
-        y: GROUND_Y - choice.height,
-        width: choice.width,
-        height: choice.height,
-        name: choice.name
-      });
-    }
+    obstacles.push({
+      x: WIDTH,
+      y: GROUND_Y - choice.height,
+      width: choice.width,
+      height: choice.height,
+      name: choice.name
+    });
   }
 
   obstacles.forEach(o => o.x -= currentSpeed);
 
-  // COLLISION
   for (let o of obstacles){
     if (checkCollision(grannyBox, o)){
       gameState = STATE.GAMEOVER;
-
-      audio.hit.play();
-      audio.game.pause();
+      playSound("hit");
+      startMusic("stop");
 
       if (score > highScore){
         highScore = score;
@@ -358,8 +396,8 @@ function draw(){
 
   ctx.fillStyle="#8dc2e3";
   ctx.fillRect(0,0,WIDTH,HEIGHT);
-
   drawGame();
+
   drawScore();
 
   if (gameState === STATE.GAMEOVER){
@@ -367,69 +405,119 @@ function draw(){
   }
 }
 
-// ===== SCORE (FIXED ALIGNMENT) =====
+// ===== SCORE =====
 function drawScore(){
+  const s = String(Math.floor(score / 60)).padStart(2,"0");
+  const hs = String(Math.floor(highScore / 60)).padStart(2,"0");
+
+  const x = WIDTH - 10;
+
   ctx.textAlign = "right";
-
-  drawBitmapText(String(score).padStart(3,"0"), WIDTH - 10, 20);
-  drawBitmapText("HI " + String(highScore).padStart(3,"0"), WIDTH - 10, 10);
-
-  ctx.textAlign = "left";
+  drawBitmapText("HI " + hs, x, 12);
+  drawBitmapText(s, x, 28);
 }
 
-// ===== GAME OVER UI (FIXED SIZING) =====
+// ===== GAME OVER =====
 function drawGameOverOverlay(){
 
   const lines = ["GAME OVER", "PLAY AGAIN?"];
-  const padding = 14;
+  const padding = 10;
   const lineHeight = bitmapFont.charHeight + 6;
 
   let maxWidth = 0;
-  for (const l of lines){
-    maxWidth = Math.max(maxWidth, l.length * 9);
-  }
+  lines.forEach(line=>{
+    const w = line.length * 9;
+    if (w > maxWidth) maxWidth = w;
+  });
 
-  const boxW = maxWidth + padding * 2;
-  const boxH = lines.length * lineHeight + padding * 2;
+  const boxWidth = maxWidth + padding*2;
+  const boxHeight = lines.length * lineHeight + padding*2;
 
-  const x = (WIDTH - boxW)/2;
-  const y = (HEIGHT - boxH)/2;
+  const x = (WIDTH - boxWidth)/2;
+  const y = (HEIGHT - boxHeight)/2;
 
-  ctx.fillStyle = "black";
-  ctx.fillRect(x,y,boxW,boxH);
+  ctx.fillStyle="black";
+  ctx.fillRect(x,y,boxWidth,boxHeight);
 
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(x,y,boxW,boxH);
+  ctx.strokeStyle="white";
+  ctx.lineWidth=4;
+  ctx.strokeRect(x,y,boxWidth,boxHeight);
 
-  lines.forEach((l,i)=>{
-    drawCenteredText(l, y + padding + i * lineHeight);
+  lines.forEach((line,i)=>{
+    drawCenteredText(line, y + padding + i*lineHeight);
   });
 }
 
 // ===== TEXT =====
 function drawCenteredText(text, y){
-  const w = text.length * 9;
-  drawBitmapText(text, (WIDTH - w)/2, y);
+  const textWidth = text.length * 9;
+  drawBitmapText(text, (WIDTH-textWidth)/2, y);
 }
 
 function drawBitmapText(text,x,y){
   text = text.toUpperCase();
-
   for (let i=0;i<text.length;i++){
-    const idx = bitmapFont.chars.indexOf(text[i]);
-    if (idx < 0) continue;
+    const index = bitmapFont.chars.indexOf(text[i]);
+    if (index===-1) continue;
+    ctx.drawImage(images.font,index*8,0,8,10,x+i*9,y,8,10);
+  }
+}
 
-    ctx.drawImage(
-      images.font,
-      idx * 8,0,8,10,
-      x + i*9,y,8,10
-    );
+// ===== TITLE =====
+function drawTitle(){
+  ctx.fillStyle="black";
+  ctx.fillRect(0,0,WIDTH,HEIGHT);
+
+  const img = images.title;
+  if (img.complete){
+    ctx.drawImage(img,(WIDTH-363)/2,(HEIGHT-222)/2-10);
+  }
+
+  if (showBlink)
+    drawBitmapText("PRESS BUTTON TO START",20,250);
+}
+
+// ===== GAME =====
+let lineOffset = 0;
+
+function drawGame(){
+  ctx.drawImage(cloudsLayer.image,0,20);
+  distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
+  foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
+
+  ctx.fillStyle="#867e7c";
+  ctx.fillRect(0, ROAD_TOP, WIDTH, STREET_HEIGHT + ROAD_EXTENSION);
+
+  drawRoadLine();
+
+  obstacles.forEach(o=>{
+    ctx.drawImage(images[o.name], o.x, o.y, o.width, o.height);
+  });
+
+  const drawY = granny.feetY - granny.height;
+  const sx = granny.frame * granny.width;
+  ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
+}
+
+// ===== ROAD =====
+function drawRoadLine(){
+  const DASH = 48;
+  const GAP = 108;
+  const CYCLE = DASH + GAP;
+
+  if (gameState === STATE.PLAYING){
+    lineOffset -= currentSpeed;
+  }
+
+  ctx.fillStyle = "#fef752";
+
+  for(let i = 0; i < WIDTH / CYCLE + 2; i++){
+    ctx.fillRect(i*CYCLE + (lineOffset % CYCLE), HEIGHT-25, DASH, 3);
   }
 }
 
 // ===== UTIL =====
-function checkCollision(a,b){
+function checkCollision(a, b){
   return (
     a.x < b.x + b.width &&
     a.x + a.width > b.x &&
@@ -438,25 +526,6 @@ function checkCollision(a,b){
   );
 }
 
-function randomGap(){
+function randomGap() {
   return 80 + Math.random()*220;
-}
-
-function recycleBuildings(list,prefix){
-  if (!list.length) return;
-
-  if (list[0].x + list[0].image.width < 0){
-    list.shift();
-
-    const img = images[prefix + (Math.floor(Math.random()*5)+1)];
-    const last = list[list.length-1];
-
-    list.push({
-      image: img,
-      x: last.x + last.image.width,
-      y: prefix === "fg"
-        ? ROAD_TOP - img.height
-        : HEIGHT - STREET_HEIGHT - img.height - 40
-    });
-  }
 }
