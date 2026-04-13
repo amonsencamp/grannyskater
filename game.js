@@ -129,7 +129,7 @@ window.addEventListener("keydown", (e) => {
   if (spaceHeld) return;
   spaceHeld = true;
 
-  playSound("select");
+
 
   if (gameState === STATE.TITLE){
     startGame();
