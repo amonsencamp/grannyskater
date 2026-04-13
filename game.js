@@ -27,7 +27,7 @@ let baseSpeed = 3;
 let currentSpeed = 3;
 let speedTimer = 0;
 
-// Score (seconds only)
+// Score
 let scoreFrames = 0;
 let score = 0;
 let highScore = parseInt(localStorage.getItem("grannyHighScore") || "0");
@@ -39,7 +39,20 @@ let showBlink = true;
 // Images
 const images = {};
 
-// Font
+// ===== AUDIO =====
+const audio = {
+  title: new Audio("assets/titleloop.wav"),
+  game: new Audio("assets/song.wav"),
+  jump: new Audio("assets/jump.wav"),
+  land: new Audio("assets/land.wav"),
+  hit: new Audio("assets/hit.wav"),
+  select: new Audio("assets/select.wav"),
+};
+
+audio.title.loop = true;
+audio.game.loop = true;
+
+// ===== FONT =====
 const bitmapFont = {
   chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
   charWidth: 8,
@@ -74,12 +87,12 @@ window.addEventListener("keydown", (e) => {
   if (spaceHeld) return;
   spaceHeld = true;
 
-  if (gameState === STATE.TITLE) {
+  if (gameState === STATE.TITLE){
     startGame();
     return;
   }
 
-  if (gameState === STATE.GAMEOVER) {
+  if (gameState === STATE.GAMEOVER){
     resetGame();
     startGame();
     return;
@@ -120,13 +133,16 @@ let loadedCount = 0;
 imagesToLoad.forEach(imgData=>{
   const img = new Image();
   img.src = imgData.src;
+
   img.onload = ()=>{
     loadedCount++;
     if (loadedCount === imagesToLoad.length){
       initLayers();
       requestAnimationFrame(loop);
+      startAudio(STATE.TITLE);
     }
   };
+
   images[imgData.name] = img;
 });
 
@@ -141,22 +157,14 @@ function initLayers(){
   let xPos = 0;
   while(xPos < WIDTH + 200){
     const img = images["bg"+(Math.floor(Math.random()*5)+1)];
-    distantBuildings.push({
-      image: img,
-      x: xPos,
-      y: HEIGHT - STREET_HEIGHT - img.height - 40
-    });
+    distantBuildings.push({ image: img, x: xPos, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
     xPos += img.width;
   }
 
   xPos = 0;
   while(xPos < WIDTH + 200){
     const img = images["fg"+(Math.floor(Math.random()*5)+1)];
-    foregroundBuildings.push({
-      image: img,
-      x: xPos,
-      y: ROAD_TOP - img.height
-    });
+    foregroundBuildings.push({ image: img, x: xPos, y: ROAD_TOP - img.height });
     xPos += img.width;
   }
 }
@@ -186,7 +194,21 @@ function resetGame(){
 
 // ===== START =====
 function startGame(){
+  audio.select.play();
+  startAudio(STATE.PLAYING);
   gameState = STATE.PLAYING;
+}
+
+// ===== AUDIO SWITCH =====
+function startAudio(state){
+  audio.title.pause();
+  audio.game.pause();
+
+  audio.title.currentTime = 0;
+  audio.game.currentTime = 0;
+
+  if (state === STATE.TITLE) audio.title.play();
+  if (state === STATE.PLAYING) audio.game.play();
 }
 
 // ===== LOOP =====
@@ -207,7 +229,7 @@ function update(){
 
   if (gameState !== STATE.PLAYING) return;
 
-  // ===== SPEED =====
+  // SPEED
   speedTimer++;
   if (speedTimer > 120){
     speedTimer = 0;
@@ -215,55 +237,57 @@ function update(){
   }
   currentSpeed = baseSpeed;
 
-  // ===== SCORE (SECONDS ONLY) =====
+  // SCORE (SECONDS ONLY)
   scoreFrames++;
   score = Math.floor(scoreFrames / 60);
 
-  // ===== GRAVITY / JUMP =====
+  // ===== RESTORED JUMP ANIMATION (YOUR ORIGINAL LOGIC) =====
   granny.frameTimer++;
 
   if (granny.state === "anticipation"){
     granny.frame = 1;
-
     if (granny.frameTimer > 5){
       granny.vy = granny.jumpPower;
       granny.state = "jump";
       granny.frameTimer = 0;
+
+      audio.jump.currentTime = 0;
+      audio.jump.play();
     }
   }
-
   else if (granny.state === "jump"){
     granny.vy += granny.gravity;
     granny.feetY += granny.vy;
 
-    // --- RESTORED SPRITE ANIMATION ---
     if (granny.vy < -6) granny.frame = 2;
     else if (granny.vy < -2) granny.frame = 3;
-    else if (granny.vy < 2) granny.frame = 4;
+    else if (granny.vy < 0) granny.frame = 4;
     else granny.frame = 5;
 
     if (granny.feetY >= GROUND_Y){
       granny.feetY = GROUND_Y;
       granny.vy = 0;
       granny.state = "landing";
+      granny.frame = 6;
       granny.frameTimer = 0;
       granny.grounded = true;
+
+      audio.land.currentTime = 0;
+      audio.land.play();
     } else {
       granny.grounded = false;
     }
   }
-
   else if (granny.state === "landing"){
     if (granny.frameTimer > 4){
       granny.frame++;
       granny.frameTimer = 0;
-      if (granny.frame > 6){
+      if (granny.frame > 8){
         granny.frame = 0;
         granny.state = "idle";
       }
     }
   }
-
   else if (granny.state === "idle"){
     granny.frame = 0;
     granny.grounded = true;
@@ -276,24 +300,22 @@ function update(){
     height: GRANNY_HITBOX.height
   };
 
-  // ===== MOVE WORLD =====
+  // MOVE WORLD
   distantBuildings.forEach(b => b.x -= currentSpeed * 0.2);
   foregroundBuildings.forEach(b => b.x -= currentSpeed);
 
   recycleBuildings(distantBuildings, "bg");
   recycleBuildings(foregroundBuildings, "fg");
 
-  // ===== OBSTACLES =====
+  // OBSTACLES
   obstacleTimer++;
-
   if (obstacleTimer > nextObstacleGap){
     const last = obstacles[obstacles.length - 1];
     const safeGap = granny.width + 25;
 
     if (!last || WIDTH - last.x > safeGap){
-
       obstacleTimer = 0;
-      nextObstacleGap = 80 + Math.random() * 180;
+      nextObstacleGap = 80 + Math.random() * 200;
 
       const choice = obstacleFiles[Math.floor(Math.random()*obstacleFiles.length)];
 
@@ -304,19 +326,18 @@ function update(){
         height: choice.height,
         name: choice.name
       });
-
-      if (Math.random() < 0.25){
-        nextObstacleGap *= 0.6;
-      }
     }
   }
 
   obstacles.forEach(o => o.x -= currentSpeed);
 
-  // ===== COLLISION =====
+  // COLLISION
   for (let o of obstacles){
     if (checkCollision(grannyBox, o)){
       gameState = STATE.GAMEOVER;
+
+      audio.hit.play();
+      audio.game.pause();
 
       if (score > highScore){
         highScore = score;
@@ -346,48 +367,43 @@ function draw(){
   }
 }
 
-// ===== SCORE =====
+// ===== SCORE (FIXED ALIGNMENT) =====
 function drawScore(){
-  const s = String(score).padStart(3,"0");
-  const hs = String(highScore).padStart(3,"0");
-
   ctx.textAlign = "right";
 
-  drawBitmapText("HI " + hs, WIDTH - 10, 12);
-  drawBitmapText(s, WIDTH - 10, 26);
+  drawBitmapText(String(score).padStart(3,"0"), WIDTH - 10, 20);
+  drawBitmapText("HI " + String(highScore).padStart(3,"0"), WIDTH - 10, 10);
 
   ctx.textAlign = "left";
 }
 
-// ===== GAME OVER =====
+// ===== GAME OVER UI (FIXED SIZING) =====
 function drawGameOverOverlay(){
 
   const lines = ["GAME OVER", "PLAY AGAIN?"];
-  const padding = 12;
+  const padding = 14;
   const lineHeight = bitmapFont.charHeight + 6;
 
   let maxWidth = 0;
+  for (const l of lines){
+    maxWidth = Math.max(maxWidth, l.length * 9);
+  }
 
-  lines.forEach(line=>{
-    const w = line.length * 9;
-    maxWidth = Math.max(maxWidth, w);
-  });
+  const boxW = maxWidth + padding * 2;
+  const boxH = lines.length * lineHeight + padding * 2;
 
-  const boxWidth = maxWidth + padding * 2;
-  const boxHeight = lines.length * lineHeight + padding * 2;
-
-  const x = (WIDTH - boxWidth)/2;
-  const y = (HEIGHT - boxHeight)/2;
+  const x = (WIDTH - boxW)/2;
+  const y = (HEIGHT - boxH)/2;
 
   ctx.fillStyle = "black";
-  ctx.fillRect(x,y,boxWidth,boxHeight);
+  ctx.fillRect(x,y,boxW,boxH);
 
   ctx.strokeStyle = "white";
   ctx.lineWidth = 4;
-  ctx.strokeRect(x,y,boxWidth,boxHeight);
+  ctx.strokeRect(x,y,boxW,boxH);
 
-  lines.forEach((line,i)=>{
-    drawCenteredText(line, y + padding + i * lineHeight);
+  lines.forEach((l,i)=>{
+    drawCenteredText(l, y + padding + i * lineHeight);
   });
 }
 
@@ -402,73 +418,13 @@ function drawBitmapText(text,x,y){
 
   for (let i=0;i<text.length;i++){
     const idx = bitmapFont.chars.indexOf(text[i]);
-    if (idx === -1) continue;
+    if (idx < 0) continue;
 
     ctx.drawImage(
       images.font,
-      idx * 8, 0, 8, 10,
-      x + i * 9, y,
-      8, 10
+      idx * 8,0,8,10,
+      x + i*9,y,8,10
     );
-  }
-}
-
-// ===== TITLE =====
-function drawTitle(){
-  ctx.fillStyle="black";
-  ctx.fillRect(0,0,WIDTH,HEIGHT);
-
-  const img = images.title;
-  if (img.complete){
-    ctx.drawImage(img,(WIDTH-363)/2,(HEIGHT-222)/2-10);
-  }
-
-  if (showBlink)
-    drawBitmapText("PRESS BUTTON TO START",20,250);
-}
-
-// ===== GAME =====
-let lineOffset = 0;
-
-function drawGame(){
-  ctx.drawImage(cloudsLayer.image,0,20);
-
-  distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
-  foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
-
-  ctx.fillStyle="#867e7c";
-  ctx.fillRect(0, ROAD_TOP, WIDTH, STREET_HEIGHT + ROAD_EXTENSION);
-
-  drawRoadLine();
-
-  obstacles.forEach(o=>{
-    ctx.drawImage(images[o.name], o.x, o.y, o.width, o.height);
-  });
-
-  const drawY = granny.feetY - granny.height;
-  const sx = granny.frame * granny.width;
-
-  ctx.drawImage(
-    images.granny,
-    sx,0,granny.width,granny.height,
-    granny.x,drawY,granny.width,granny.height
-  );
-}
-
-// ===== ROAD =====
-function drawRoadLine(){
-  const DASH = 48;
-  const GAP = 108;
-  const CYCLE = DASH + GAP;
-
-  if (gameState === STATE.PLAYING){
-    lineOffset -= currentSpeed;
-  }
-
-  ctx.fillStyle = "#fef752";
-
-  for(let i=0;i<WIDTH/CYCLE+2;i++){
-    ctx.fillRect(i*CYCLE + (lineOffset % CYCLE), HEIGHT-25, DASH, 3);
   }
 }
 
@@ -486,7 +442,7 @@ function randomGap(){
   return 80 + Math.random()*220;
 }
 
-function recycleBuildings(list, prefix){
+function recycleBuildings(list,prefix){
   if (!list.length) return;
 
   if (list[0].x + list[0].image.width < 0){
