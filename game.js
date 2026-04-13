@@ -60,7 +60,7 @@ const bitmapFont = {
 // ===== AUDIO =====
 const audio = {
   title:   new Audio("assets/titleloop.wav"),
-  game:    new Audio("assets/song.wav"),
+  game:    new Audio("assets/song.mp3"),
   jump:    new Audio("assets/jump.wav"),
   land:    new Audio("assets/land.wav"),
   hit:     new Audio("assets/hit.wav"),
@@ -76,7 +76,7 @@ const QUIP_COOLDOWN = 180;  // frames (~3s at 60fps)
 
 Object.values(audio).forEach(a => {
   a.preload = "auto";
-  a.volume = 0.8;
+  a.volume = 1.0;
 });
 
 audio.title.loop = true;
