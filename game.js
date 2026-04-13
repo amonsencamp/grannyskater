@@ -36,6 +36,14 @@ let highScore = parseInt(localStorage.getItem("grannyHighScore") || "0");
 let blinkTimer = 0;
 let showBlink = true;
 
+// Screen shake
+let shakeFrames = 0;
+const SHAKE_DURATION = 12;  // frames
+const SHAKE_MAGNITUDE = 4;  // pixels
+
+// Double jump
+let hasDoubleJumped = false;
+
 // Images
 const images = {};
 
@@ -52,7 +60,7 @@ const bitmapFont = {
 // ===== AUDIO =====
 const audio = {
   title: new Audio("assets/titleloop.wav"),
-  game: new Audio("assets/song.mp3"),
+  game: new Audio("assets/song.wav"),
   jump: new Audio("assets/jump.wav"),
   land: new Audio("assets/land.wav"),
   hit: new Audio("assets/hit.wav"),
@@ -151,9 +159,17 @@ window.addEventListener("keydown", (e) => {
   }
 
   // During gameplay: no select sound — only the jump pipeline plays sounds
-  if (gameState === STATE.PLAYING && granny.grounded && granny.state === "idle") {
+  if (gameState === STATE.PLAYING && granny.state === "idle") {
     granny.state = "anticipation";
     granny.frameTimer = 0;
+    return;
+  }
+
+  // Double jump: allowed while airborne and not yet used
+  if (gameState === STATE.PLAYING && granny.state === "jump" && !hasDoubleJumped) {
+    hasDoubleJumped = true;
+    granny.vy = granny.jumpPower * 0.85;  // slightly weaker than first jump
+    playSound("jump");
   }
 });
 
@@ -222,6 +238,9 @@ function resetGame() {
   granny.frame = 0;
   granny.frameTimer = 0;
   granny.grounded = true;
+
+  hasDoubleJumped = false;
+  shakeFrames = 0;
 
   lineOffset = 0;
 
@@ -295,6 +314,7 @@ function update() {
       granny.frame = 6;
       granny.frameTimer = 0;
       granny.grounded = true;
+      hasDoubleJumped = false;
       playSound("land");
     } else {
       granny.grounded = false;
@@ -364,6 +384,7 @@ function update() {
   for (const o of obstacles) {
     if (checkCollision(grannyBox, o)) {
       gameState = STATE.GAMEOVER;
+      shakeFrames = SHAKE_DURATION;
       playSound("hit");
       startMusic("stop");
       if (score > highScore) {
@@ -382,6 +403,14 @@ function draw() {
     return;
   }
 
+  ctx.save();
+  if (shakeFrames > 0) {
+    shakeFrames--;
+    const dx = (Math.random() * 2 - 1) * SHAKE_MAGNITUDE;
+    const dy = (Math.random() * 2 - 1) * SHAKE_MAGNITUDE;
+    ctx.translate(dx, dy);
+  }
+
   ctx.fillStyle = "#8dc2e3";
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   drawGame();
@@ -390,6 +419,8 @@ function draw() {
   if (gameState === STATE.GAMEOVER) {
     drawGameOverOverlay();
   }
+
+  ctx.restore();
 }
 
 // ===== SCORE =====
