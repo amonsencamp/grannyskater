@@ -72,7 +72,7 @@ const audio = {
 
 // Quip cooldown — prevents overlapping speech clips
 let quipCooldown = 0;
-const QUIP_COOLDOWN = 180;  // frames (~3s at 60fps)
+const QUIP_COOLDOWN = 300;  // frames (~5s at 60fps)
 
 Object.values(audio).forEach(a => {
   a.preload = "auto";
