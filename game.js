@@ -525,7 +525,7 @@ function drawTitle() {
   }
 
  if (showBlink) {
-    const text = "PRESS BUTTON TO START";
+    const text = "PRESS SPACE TO START";
     const textWidth = (text.length - 1) * bitmapFont.stride + bitmapFont.charWidth;
     drawBitmapText(text, (WIDTH - textWidth) / 2, 250);
   }
