@@ -501,7 +501,7 @@ function drawTitle() {
   }
 
   if (showBlink) {
-    drawBitmapText("PRESS BUTTON TO START", 20, 250);
+    drawBitmapText("PRESS BUTTON TO START", 200, 250);
   }
 }
 
