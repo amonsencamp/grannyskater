@@ -500,8 +500,10 @@ function drawTitle() {
     ctx.drawImage(img, (WIDTH - 363) / 2, (HEIGHT - 222) / 2 - 10);
   }
 
-  if (showBlink) {
-    drawBitmapText("PRESS BUTTON TO START", 200, 250);
+ if (showBlink) {
+    const text = "PRESS BUTTON TO START";
+    const textWidth = (text.length - 1) * bitmapFont.stride + bitmapFont.charWidth;
+    drawBitmapText(text, (WIDTH - textWidth) / 2, 250);
   }
 }
 
