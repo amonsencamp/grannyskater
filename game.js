@@ -76,7 +76,7 @@ const QUIP_COOLDOWN = 300;  // frames (~5s at 60fps)
 
 Object.values(audio).forEach(a => {
   a.preload = "auto";
-  a.volume = 1.5;
+  a.volume = 1.0;
 });
 
 audio.title.loop = true;
