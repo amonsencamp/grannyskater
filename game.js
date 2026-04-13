@@ -380,6 +380,16 @@ function update() {
 
   obstacles.forEach(o => o.x -= currentSpeed);
 
+  // granny shadow 
+const shadowY = GROUND_Y -2; // just below feet 
+let shadowAlpha = 0.3; // default on ground 
+if (!granny.grounded){
+  const jumpHeight = GROUND_Y - granny.feetY; 
+  shadowAlpha = Math.max(0.01, 0.3 - 0.29 * (jumpHeight / 150)); // fade with height 
+}
+ctx.fillStyle = rgba(0,0,0,${shadowAlpha});
+ctx.fillRect(granny.x + 20, shadowY, 65, 4); // centered under granny
+
   // Collision detection
   for (const o of obstacles) {
     if (checkCollision(grannyBox, o)) {
