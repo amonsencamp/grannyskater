@@ -68,10 +68,18 @@ let nextObstacleGap = randomGap();
 // Input
 window.addEventListener("keydown", (e) => {
   if (e.code === "Space") {
+
     if (gameState === STATE.TITLE){
       startGame();
       return;
     }
+
+    if (gameState === STATE.GAMEOVER){
+      resetGame();
+      startGame();
+      return;
+    }
+
     if (gameState === STATE.PLAYING && granny.grounded && granny.state === "idle") {
       granny.state = "anticipation";
       granny.frameTimer = 0;
@@ -174,6 +182,20 @@ function checkCollision(a, b){
     a.y < b.y + b.height &&
     a.y + a.height > b.y
   );
+}
+// ====== Reset game ======
+function resetGame(){
+  obstacles.length = 0;
+  obstacleTimer = 0;
+  nextObstacleGap = randomGap();
+
+  granny.feetY = GROUND_Y;
+  granny.vy = 0;
+  granny.state = "idle";
+  granny.frame = 0;
+  granny.frameTimer = 0; // ← add this
+  granny.grounded = true;
+  lineOffset = 0;
 }
 
 // ====== Start game ======
@@ -316,17 +338,40 @@ function update(){
     }
   }
 }
+// ====== Draw Game Over ======
+function drawGameOver(){
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,WIDTH,HEIGHT);
+
+  drawCenteredText("GAME OVER", 110);
+  drawCenteredText("PLAY AGAIN?", 140);
+  drawCenteredText("PRESS SPACE", 180);
+}
+// ====== Draw Centered Text ======
+function drawCenteredText(text, y){
+  const spacing = 1;
+  const textWidth = text.length * (bitmapFont.charWidth + spacing) - spacing;
+  const x = Math.floor((WIDTH - textWidth) / 2);
+  drawBitmapText(text, x, y);
+}
 
 // ====== Draw ======
 function draw(){
-  ctx.fillStyle="#8dc2e3";
-  ctx.fillRect(0,0,WIDTH,HEIGHT);
+  if (gameState === STATE.TITLE){
+    drawTitle();
+    return;
+  }
 
-  if (gameState===STATE.TITLE) drawTitle();
-  else if (gameState===STATE.PLAYING || gameState===STATE.GAMEOVER) drawGame();
+  if (gameState === STATE.PLAYING){
+    ctx.fillStyle="#8dc2e3";
+    ctx.fillRect(0,0,WIDTH,HEIGHT);
+    drawGame();
+    return;
+  }
 
   if (gameState === STATE.GAMEOVER){
-    drawBitmapText("GAME OVER",130,120);
+    drawGameOver();
+    return;
   }
 }
 
