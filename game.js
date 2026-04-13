@@ -258,6 +258,32 @@ function update(){
 
   distantBuildings.forEach(b => b.x -= speed * 0.2);
   foregroundBuildings.forEach(b => b.x -= speed);
+  // Foreground buildings loop
+if (foregroundBuildings.length && foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
+  foregroundBuildings.shift();
+
+  const img = images["fg"+(Math.floor(Math.random()*5)+1)];
+  const last = foregroundBuildings[foregroundBuildings.length-1];
+
+  foregroundBuildings.push({
+    image: img,
+    x: last.x + last.image.width,
+    y: ROAD_TOP - img.height
+  });
+}
+
+  if (distantBuildings.length && distantBuildings[0].x + distantBuildings[0].image.width < 0){
+  distantBuildings.shift();
+
+  const img = images["bg"+(Math.floor(Math.random()*5)+1)];
+  const last = distantBuildings[distantBuildings.length-1];
+
+  distantBuildings.push({
+    image: img,
+    x: last.x + last.image.width,
+    y: HEIGHT - STREET_HEIGHT - img.height - 40
+  });
+}
 
   obstacleTimer++;
   if (obstacleTimer > nextObstacleGap){
@@ -409,11 +435,19 @@ function drawRoadLine(){
   const GAP = 108;
   const CYCLE = DASH + GAP;
 
-  lineOffset -= speed;
+  if (gameState === STATE.PLAYING){
+    lineOffset -= speed;
+  }
+
   ctx.fillStyle = "#fef752";
 
   for(let i = 0; i < WIDTH / CYCLE + 2; i++){
-    ctx.fillRect(i * CYCLE + (lineOffset % CYCLE), HEIGHT - 25, DASH, 3);
+    ctx.fillRect(
+      i * CYCLE + (lineOffset % CYCLE),
+      HEIGHT - 25,
+      DASH,
+      3
+    );
   }
 }
 
