@@ -1,72 +1,34 @@
+// ====== AUDIO ======
+const audio = {
+  title: new Audio("assets/titleloop.wav"),
+  game: new Audio("assets/song.wav"),
+  jump: new Audio("assets/jump.wav"),
+  land: new Audio("assets/land.wav"),
+  hit: new Audio("assets/hit.wav"),
+  select: new Audio("assets/select.wav")
+};
+
+// Loop setup
+audio.title.loop = true;
+audio.game.loop = true;
+
+// Helper to play SFX cleanly
+function playSound(sound){
+  const s = sound.cloneNode(); // allows overlapping sounds
+  s.play();
+}
+
+function stopMusic(){
+  audio.title.pause();
+  audio.title.currentTime = 0;
+
+  audio.game.pause();
+  audio.game.currentTime = 0;
+}
+
 // ====== game.js ======
 
-// Canvas setup
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-ctx.imageSmoothingEnabled = false;
-
-// Canvas size
-const WIDTH = 400;
-const HEIGHT = 300;
-
-const STREET_HEIGHT = 30;
-const ROAD_EXTENSION = 50;
-const BASELINE_INSET = 45;
-
-const ROAD_TOP = HEIGHT - STREET_HEIGHT - ROAD_EXTENSION;
-const GROUND_Y = ROAD_TOP + BASELINE_INSET;
-
-// Game states
-const STATE = { TITLE: 0, PLAYING: 1, GAMEOVER: 2 };
-let gameState = STATE.TITLE;
-
-// Input state (prevents held-space issues)
-let spaceHeld = false;
-
-// Blink timer
-let blinkTimer = 0;
-let showBlink = true;
-
-// Game speed
-const speed = 3;
-
-// Images container
-const images = {};
-
-// Bitmap font
-const bitmapFont = {
-  chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
-  charWidth: 8,
-  charHeight: 10
-};
-
-// Granny
-const granny = {
-  x: 30,
-  feetY: GROUND_Y,
-  width: 106,
-  height: 150,
-  vy: 0,
-  gravity: 0.5,
-  jumpPower: -11,
-  grounded: true,
-  frame: 0,
-  frameTimer: 0,
-  state: "idle"
-};
-
-// Hitbox
-const GRANNY_HITBOX = {
-  x: 40,
-  y: 40,
-  width: 35,
-  height: 95
-};
-
-// Obstacles
-const obstacles = [];
-let obstacleTimer = 0;
-let nextObstacleGap = randomGap();
+// (everything unchanged until INPUT)
 
 // ====== INPUT ======
 window.addEventListener("keydown", (e) => {
@@ -75,18 +37,28 @@ window.addEventListener("keydown", (e) => {
     if (spaceHeld) return;
     spaceHeld = true;
 
+    // First user interaction → allow audio
+    audio.title.play().catch(()=>{});
+
     if (gameState === STATE.TITLE){
+      playSound(audio.select);
+      stopMusic();
+      audio.game.play();
       startGame();
       return;
     }
 
     if (gameState === STATE.GAMEOVER){
+      playSound(audio.select);
+      stopMusic();
+      audio.game.play();
       resetGame();
       startGame();
       return;
     }
 
     if (gameState === STATE.PLAYING && granny.grounded && granny.state === "idle") {
+      playSound(audio.jump);
       granny.state = "anticipation";
       granny.frameTimer = 0;
     }
@@ -97,72 +69,9 @@ window.addEventListener("keyup", (e) => {
   if (e.code === "Space") spaceHeld = false;
 });
 
-// ====== PRELOAD ======
-const fgBuildingFiles = ["fg_building1.png","fg_building2.png","fg_building3.png","fg_building4.png","fg_building5.png"];
-const bgBuildingFiles = ["bg_building1.png","bg_building2.png","bg_building3.png","bg_building4.png","bg_building5.png"];
-
-const obstacleFiles = [
-  { name: "cone", width: 25, height: 45, src: "assets/cone.png" },
-  { name: "manhole", width: 50, height: 17, src: "assets/manhole.png" },
-  { name: "trash", width: 40, height: 60, src: "assets/trash.png" }
-];
-
-const imagesToLoad = [
-  { name: "title", src: "assets/titlescreen.png" },
-  { name: "granny", src: "assets/granny_jump.png" },
-  { name: "clouds", src: "assets/clouds.png" },
-  { name: "font", src: "assets/font.png" }
-];
-
-fgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"fg"+(i+1),src:"assets/"+f}));
-bgBuildingFiles.forEach((f,i)=>imagesToLoad.push({name:"bg"+(i+1),src:"assets/"+f}));
-obstacleFiles.forEach(o=>imagesToLoad.push({name:o.name,src:o.src}));
-
-let loadedCount = 0;
-imagesToLoad.forEach(imgData=>{
-  const img = new Image();
-  img.src = imgData.src;
-
-  img.onload = ()=>{
-    loadedCount++;
-    if (loadedCount === imagesToLoad.length){
-      initLayers();
-      requestAnimationFrame(loop);
-    }
-  };
-
-  images[imgData.name] = img;
-});
-
-// ====== LAYERS ======
-let cloudsLayer = { image:null, x:0, y:20 };
-let distantBuildings = [];
-let foregroundBuildings = [];
-
-function initLayers(){
-  cloudsLayer.image = images.clouds;
-
-  let xPos = 0;
-  while(xPos < WIDTH + 200){
-    const img = images["bg"+(Math.floor(Math.random()*5)+1)];
-    distantBuildings.push({
-      image: img,
-      x: xPos,
-      y: HEIGHT - STREET_HEIGHT - img.height - 40
-    });
-    xPos += img.width;
-  }
-
-  xPos = 0;
-  while(xPos < WIDTH + 200){
-    const img = images["fg"+(Math.floor(Math.random()*5)+1)];
-    foregroundBuildings.push({
-      image: img,
-      x: xPos,
-      y: ROAD_TOP - img.height
-    });
-    xPos += img.width;
-  }
+// ====== START ======
+function startGame(){
+  gameState = STATE.PLAYING;
 }
 
 // ====== RESET ======
@@ -179,18 +88,6 @@ function resetGame(){
   granny.grounded = true;
 
   lineOffset = 0;
-}
-
-// ====== START ======
-function startGame(){
-  gameState = STATE.PLAYING;
-}
-
-// ====== LOOP ======
-function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
 }
 
 // ====== UPDATE ======
@@ -230,6 +127,8 @@ function update(){
       granny.frame = 6;
       granny.frameTimer = 0;
       granny.grounded = true;
+
+      playSound(audio.land); // ← LAND SOUND
     } else {
       granny.grounded = false;
     }
@@ -258,32 +157,28 @@ function update(){
 
   distantBuildings.forEach(b => b.x -= speed * 0.2);
   foregroundBuildings.forEach(b => b.x -= speed);
-  // Foreground buildings loop
-if (foregroundBuildings.length && foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
-  foregroundBuildings.shift();
 
-  const img = images["fg"+(Math.floor(Math.random()*5)+1)];
-  const last = foregroundBuildings[foregroundBuildings.length-1];
-
-  foregroundBuildings.push({
-    image: img,
-    x: last.x + last.image.width,
-    y: ROAD_TOP - img.height
-  });
-}
+  if (foregroundBuildings.length && foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0){
+    foregroundBuildings.shift();
+    const img = images["fg"+(Math.floor(Math.random()*5)+1)];
+    const last = foregroundBuildings[foregroundBuildings.length-1];
+    foregroundBuildings.push({
+      image: img,
+      x: last.x + last.image.width,
+      y: ROAD_TOP - img.height
+    });
+  }
 
   if (distantBuildings.length && distantBuildings[0].x + distantBuildings[0].image.width < 0){
-  distantBuildings.shift();
-
-  const img = images["bg"+(Math.floor(Math.random()*5)+1)];
-  const last = distantBuildings[distantBuildings.length-1];
-
-  distantBuildings.push({
-    image: img,
-    x: last.x + last.image.width,
-    y: HEIGHT - STREET_HEIGHT - img.height - 40
-  });
-}
+    distantBuildings.shift();
+    const img = images["bg"+(Math.floor(Math.random()*5)+1)];
+    const last = distantBuildings[distantBuildings.length-1];
+    distantBuildings.push({
+      image: img,
+      x: last.x + last.image.width,
+      y: HEIGHT - STREET_HEIGHT - img.height - 40
+    });
+  }
 
   obstacleTimer++;
   if (obstacleTimer > nextObstacleGap){
@@ -304,95 +199,26 @@ if (foregroundBuildings.length && foregroundBuildings[0].x + foregroundBuildings
 
   for (let o of obstacles){
     if (checkCollision(grannyBox, o)){
+
+      // HIT SOUND + STOP MUSIC
+      stopMusic();
+      playSound(audio.hit);
+
       gameState = STATE.GAMEOVER;
-      return; // freeze immediately
+      return;
     }
   }
 }
 
-// ====== DRAW ======
-function draw(){
-  if (gameState === STATE.TITLE){
-    drawTitle();
-    return;
-  }
-
-  // Draw frozen or active game
-  ctx.fillStyle="#8dc2e3";
-  ctx.fillRect(0,0,WIDTH,HEIGHT);
-  drawGame();
-
-  if (gameState === STATE.GAMEOVER){
-    drawGameOverOverlay();
-  }
-}
-
-// ====== GAME OVER BOX ======
-function drawGameOverOverlay(){
-
-  const lines = ["GAME OVER", "PLAY AGAIN?"];
-  const spacing = 1;
-  const lineHeight = bitmapFont.charHeight + 6;
-
-  let maxWidth = 0;
-  lines.forEach(line=>{
-    const w = line.length * (bitmapFont.charWidth + spacing) - spacing;
-    if (w > maxWidth) maxWidth = w;
-  });
-
-  const padding = 10;
-  const boxWidth = maxWidth + padding * 2;
-  const boxHeight = lines.length * lineHeight + padding * 2 - 6;
-
-  const x = Math.floor((WIDTH - boxWidth)/2);
-  const y = Math.floor((HEIGHT - boxHeight)/2);
-
-  // black fill
-  ctx.fillStyle = "black";
-  ctx.fillRect(x,y,boxWidth,boxHeight);
-
-  // white border
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 4;
-  ctx.strokeRect(x,y,boxWidth,boxHeight);
-
-  // text
-  lines.forEach((line,i)=>{
-    drawCenteredText(line, y + padding + i * lineHeight);
-  });
-}
-
-// ====== TEXT ======
-function drawCenteredText(text, y){
-  const spacing = 1;
-  const textWidth = text.length * (bitmapFont.charWidth + spacing) - spacing;
-  const x = Math.floor((WIDTH - textWidth) / 2);
-  drawBitmapText(text, x, y);
-}
-
-function drawBitmapText(text,x,y){
-  text = text.toUpperCase();
-  if (!images.font.complete) return;
-
-  const spacing = 1;
-  for (let i=0;i<text.length;i++){
-    const index = bitmapFont.chars.indexOf(text[i]);
-    if (index===-1) continue;
-
-    ctx.drawImage(
-      images.font,
-      index * bitmapFont.charWidth,0,
-      bitmapFont.charWidth, bitmapFont.charHeight,
-      x+i*(bitmapFont.charWidth+spacing), y,
-      bitmapFont.charWidth, bitmapFont.charHeight
-    );
-  }
-}
-
-// ====== TITLE ======
+// ====== DRAW TITLE ======
 function drawTitle(){
   ctx.fillStyle="black";
   ctx.fillRect(0,0,WIDTH,HEIGHT);
+
+  // Ensure title music is playing
+  if (audio.title.paused){
+    audio.title.play().catch(()=>{});
+  }
 
   const img = images.title;
   if (img.complete){
@@ -401,66 +227,4 @@ function drawTitle(){
 
   if (showBlink)
     drawBitmapText("PRESS BUTTON TO START",20,250);
-}
-
-// ====== GAME ======
-let lineOffset = 0;
-
-function drawGame(){
-  ctx.drawImage(cloudsLayer.image,cloudsLayer.x,cloudsLayer.y);
-  distantBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
-  foregroundBuildings.forEach(b=>ctx.drawImage(b.image,b.x,b.y));
-
-  ctx.fillStyle="#867e7c";
-  ctx.fillRect(0, ROAD_TOP, WIDTH, STREET_HEIGHT + ROAD_EXTENSION);
-  drawRoadLine();
-
-  obstacles.forEach(o=>{
-    ctx.drawImage(images[o.name], o.x, o.y, o.width, o.height);
-  });
-
-  const shadowY = GROUND_Y -2;
-  let shadowAlpha = granny.grounded ? 0.3 : 0.1;
-  ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
-  ctx.fillRect(granny.x + 20, shadowY, 65, 4);
-
-  const drawY = granny.feetY - granny.height;
-  const sx = granny.frame * granny.width;
-  ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
-}
-
-// ====== ROAD ======
-function drawRoadLine(){
-  const DASH = 48;
-  const GAP = 108;
-  const CYCLE = DASH + GAP;
-
-  if (gameState === STATE.PLAYING){
-    lineOffset -= speed;
-  }
-
-  ctx.fillStyle = "#fef752";
-
-  for(let i = 0; i < WIDTH / CYCLE + 2; i++){
-    ctx.fillRect(
-      i * CYCLE + (lineOffset % CYCLE),
-      HEIGHT - 25,
-      DASH,
-      3
-    );
-  }
-}
-
-// ====== UTIL ======
-function checkCollision(a, b){
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
-}
-
-function randomGap() {
-  return 150 + Math.floor(Math.random() * 150);
 }
