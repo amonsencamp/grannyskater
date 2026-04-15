@@ -45,11 +45,8 @@ const SHAKE_MAGNITUDE = 4;  // pixels
 let hasDoubleJumped = false;
 
 // Idle bounce
-// 166 BPM = one beat every ~21.7 frames. Every 4 beats = ~87 frames.
-const BOUNCE_INTERVAL = 38;  // frames between bounces
-const BOUNCE_DURATION = 5;   // frames to hold frame 1 before returning to frame 0
-let bounceTimer = 0;
-let bounceHold = 0;
+const BPM = 166;
+const BEAT_WINDOW = 0.2; // % of beat where the "dip" happens (0.2 = 20%)
 
 // Images
 const images = {};
@@ -257,8 +254,7 @@ function resetGame() {
   hasDoubleJumped = false;
   shakeFrames = 0;
   quipCooldown = 0;
-  bounceTimer = 0;
-  bounceHold = 0;
+
 
   lineOffset = 0;
 
@@ -293,6 +289,17 @@ function update() {
   }
 
   if (gameState !== STATE.PLAYING) return;
+
+  // ===== MUSIC-SYNCED BOUNCE =====
+let isBopping = false;
+
+if (audioUnlocked && !audio.game.paused) {
+  const secondsPerBeat = 60 / BPM;
+  const t = audio.game.currentTime;
+  const beatPhase = (t % secondsPerBeat) / secondsPerBeat;
+
+  isBopping = beatPhase < BEAT_WINDOW;
+}
 
   // Speed ramp: increase base speed every 2 seconds (120 frames at 60fps)
   speedTimer++;
@@ -348,27 +355,16 @@ function update() {
       }
     }
   }
-  else if (granny.state === "idle") {
-    granny.grounded = true;
+else if (granny.state === "idle") {
+  granny.grounded = true;
 
-    bounceTimer++;
-
-    if (bounceHold > 0) {
-      // Hold the dip frame for BOUNCE_DURATION then snap back
-      granny.frame = 1;
-      bounceHold--;
-      if (bounceHold === 0) {
-        granny.frame = 0;
-        bounceTimer = 0;  // reset so next bounce is a full interval away
-      }
-    } else if (bounceTimer >= BOUNCE_INTERVAL) {
-      // Trigger the dip
-      granny.frame = 1;
-      bounceHold = BOUNCE_DURATION;
-    } else {
-      granny.frame = 0;
-    }
+  // Apply bop ONLY visually, timing comes from music
+  if (isBopping) {
+    granny.frame = 1;
+  } else {
+    granny.frame = 0;
   }
+}
 
   // Granny hitbox in world space
   const grannyBox = {
