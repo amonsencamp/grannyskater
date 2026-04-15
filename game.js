@@ -290,15 +290,19 @@ function update() {
 
   if (gameState !== STATE.PLAYING) return;
 
-  // ===== MUSIC-SYNCED BOUNCE =====
+// ===== MUSIC-SYNCED BOUNCE (EVERY OTHER BEAT) =====
 let isBopping = false;
 
 if (audioUnlocked && !audio.game.paused) {
   const secondsPerBeat = 60 / BPM;
   const t = audio.game.currentTime;
-  const beatPhase = (t % secondsPerBeat) / secondsPerBeat;
 
-  isBopping = beatPhase < BEAT_WINDOW;
+  const beatPhase = (t % secondsPerBeat) / secondsPerBeat;
+  const beatNumber = Math.floor(t / secondsPerBeat);
+
+  const isOnBeat = (beatNumber % 2 === 0); // every other beat
+
+  isBopping = isOnBeat && beatPhase < BEAT_WINDOW;
 }
 
   // Speed ramp: increase base speed every 2 seconds (120 frames at 60fps)
