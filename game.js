@@ -46,7 +46,7 @@ let hasDoubleJumped = false;
 
 // Idle bounce
 // 166 BPM = one beat every ~21.7 frames. Every 4 beats = ~87 frames.
-const BOUNCE_INTERVAL = 40;  // frames between bounces
+const BOUNCE_INTERVAL = 38;  // frames between bounces
 const BOUNCE_DURATION = 5;   // frames to hold frame 1 before returning to frame 0
 let bounceTimer = 0;
 let bounceHold = 0;
