@@ -44,17 +44,24 @@ const SHAKE_MAGNITUDE = 4;  // pixels
 // Double jump
 let hasDoubleJumped = false;
 
+// Idle bounce
+// 166 BPM = one beat every ~21.7 frames. Every 4 beats = ~87 frames.
+const BOUNCE_INTERVAL = 87;  // frames between bounces
+const BOUNCE_DURATION = 5;   // frames to hold frame 1 before returning to frame 0
+let bounceTimer = 0;
+let bounceHold = 0;
+
 // Images
 const images = {};
 
 // Font
 // charWidth is the actual pixel width of each glyph in the sprite sheet.
-// CHAR_STRIDE is the horizontal advance per character when rendering (glyph + 1px kerning gap).
+// renderStride is the horizontal advance per character when rendering (glyph + 1px kerning gap).
 const bitmapFont = {
   chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?.",
   charWidth: 8,
   charHeight: 10,
-  stride: 8,         // ← comma was missing
+  stride: 8,
   renderStride: 9
 };
 
@@ -230,7 +237,7 @@ function initLayers() {
   while (xPos < WIDTH + 200) {
     const img = images["fg" + (Math.floor(Math.random() * 5) + 1)];
     foregroundBuildings.push({ image: img, x: xPos, y: ROAD_TOP - img.height });
-    xPos += img.width;
+    xPos += img.width + 4;
   }
 }
 
@@ -250,6 +257,8 @@ function resetGame() {
   hasDoubleJumped = false;
   shakeFrames = 0;
   quipCooldown = 0;
+  bounceTimer = 0;
+  bounceHold = 0;
 
   lineOffset = 0;
 
@@ -340,8 +349,25 @@ function update() {
     }
   }
   else if (granny.state === "idle") {
-    granny.frame = 0;
     granny.grounded = true;
+
+    bounceTimer++;
+
+    if (bounceHold > 0) {
+      // Hold the dip frame for BOUNCE_DURATION then snap back
+      granny.frame = 1;
+      bounceHold--;
+      if (bounceHold === 0) {
+        granny.frame = 0;
+        bounceTimer = 0;  // reset so next bounce is a full interval away
+      }
+    } else if (bounceTimer >= BOUNCE_INTERVAL) {
+      // Trigger the dip
+      granny.frame = 1;
+      bounceHold = BOUNCE_DURATION;
+    } else {
+      granny.frame = 0;
+    }
   }
 
   // Granny hitbox in world space
@@ -361,7 +387,7 @@ function update() {
     foregroundBuildings.shift();
     const img  = images["fg" + (Math.floor(Math.random() * 5) + 1)];
     const last = foregroundBuildings[foregroundBuildings.length - 1];
-    foregroundBuildings.push({ image: img, x: last.x + last.image.width, y: ROAD_TOP - img.height });
+    foregroundBuildings.push({ image: img, x: last.x + last.image.width + 4, y: ROAD_TOP - img.height });
   }
 
   // Recycle distant buildings
@@ -471,10 +497,9 @@ function drawGameOverOverlay() {
   const padding    = 10;
   const lineHeight = bitmapFont.charHeight + 6;
 
-  // Use stride for accurate pixel width
+  // Use renderStride for accurate pixel width
   let maxWidth = 0;
   lines.forEach(line => {
-    // Last char doesn't need trailing gap, so: (len-1)*stride + charWidth
     const w = (line.length - 1) * bitmapFont.renderStride + bitmapFont.charWidth;
     if (w > maxWidth) maxWidth = w;
   });
@@ -492,7 +517,6 @@ function drawGameOverOverlay() {
   ctx.strokeRect(x, y, boxWidth, boxHeight);
 
   lines.forEach((line, i) => {
-    // Accurate centering using stride
     const textWidth = (line.length - 1) * bitmapFont.renderStride + bitmapFont.charWidth;
     const tx = (WIDTH - textWidth) / 2;
     drawBitmapText(line, tx, y + padding + i * lineHeight);
@@ -517,7 +541,6 @@ function drawBitmapText(text, x, y) {
   }
 }
 
-
 // ===== TITLE =====
 function drawTitle() {
   ctx.fillStyle = "black";
@@ -528,7 +551,7 @@ function drawTitle() {
     ctx.drawImage(img, (WIDTH - 363) / 2, (HEIGHT - 222) / 2 - 10);
   }
 
- if (showBlink) {
+  if (showBlink) {
     const text = "PRESS SPACE TO START";
     const textWidth = (text.length - 1) * bitmapFont.renderStride + bitmapFont.charWidth;
     drawBitmapText(text, (WIDTH - textWidth) / 2, 250);
@@ -550,13 +573,13 @@ function drawGame() {
     ctx.drawImage(images[o.name], o.x, o.y, o.width, o.height);
   });
 
-    // Shadow under granny — fades as she rises
+  // Shadow under granny — fades as she rises
   const shadowY = GROUND_Y - 2;
   const jumpHeight = GROUND_Y - granny.feetY;
   const shadowAlpha = Math.max(0.01, 0.3 - 0.29 * (jumpHeight / 150));
   ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
   ctx.fillRect(granny.x + 20, shadowY, 65, 4);
-  
+
   const drawY = granny.feetY - granny.height;
   const sx    = granny.frame * granny.width;
   ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
