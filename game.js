@@ -300,7 +300,7 @@ if (audioUnlocked && !audio.game.paused) {
   const beatPhase = (t % secondsPerBeat) / secondsPerBeat;
   const beatNumber = Math.floor(t / secondsPerBeat);
 
-  const isOnBeat = (beatNumber % 4 === 0); // every other beat
+  const isOnBeat = (beatNumber % 2 === 0); // every other beat
 
   isBopping = isOnBeat && beatPhase < BEAT_WINDOW;
 }
