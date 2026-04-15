@@ -387,7 +387,7 @@ function update() {
     foregroundBuildings.shift();
     const img  = images["fg" + (Math.floor(Math.random() * 5) + 1)];
     const last = foregroundBuildings[foregroundBuildings.length - 1];
-    foregroundBuildings.push({ image: img, x: last.x + last.image.width+, y: ROAD_TOP - img.height });
+    foregroundBuildings.push({ image: img, x: last.x + last.image.width, y: ROAD_TOP - img.height });
   }
 
   // Recycle distant buildings
