@@ -616,6 +616,7 @@ ctx.drawImage(
   drawX, drawY,
   drawWidth, drawHeight
 );
+}
 
 // ===== ROAD LINE =====
 function drawRoadLine() {
