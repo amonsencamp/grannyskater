@@ -580,6 +580,7 @@ const baseY = granny.feetY;
 
 let scaleX = 1;
 let scaleY = 1;
+let strength = 0; // ✅ FIX: define upfront
 
 // Smooth pulse based on music
 if (audioUnlocked && !audio.game.paused && granny.state === "idle") {
@@ -587,17 +588,15 @@ if (audioUnlocked && !audio.game.paused && granny.state === "idle") {
   const t = audio.game.currentTime;
   const phase = (t % secondsPerBeat) / secondsPerBeat;
 
-  // smooth 0→1→0 curve
   const pulse = Math.sin(phase * Math.PI);
 
-  // apply ONLY on every other beat
   const beatNumber = Math.floor(t / secondsPerBeat);
   const isOnBeat = (beatNumber % 2 === 1);
 
-  const strength = isOnBeat ? pulse : 0;
+  strength = isOnBeat ? pulse : 0; // ✅ assign, don’t declare
 
-  scaleY = 1 - 0.06 * strength; // squash
-  scaleX = 1 + 0.06 * strength; // stretch
+  scaleY = 1 - 0.06 * strength;
+  scaleX = 1 + 0.06 * strength;
 }
 
 // Maintain foot position
@@ -605,7 +604,7 @@ const drawWidth  = granny.width  * scaleX;
 const drawHeight = granny.height * scaleY;
 
 const footSink = 2 * strength;
-  
+
 const drawX = baseX - (drawWidth - granny.width) / 2;
 const drawY = baseY - drawHeight + footSink;
 
@@ -617,7 +616,6 @@ ctx.drawImage(
   drawX, drawY,
   drawWidth, drawHeight
 );
-}
 
 // ===== ROAD LINE =====
 function drawRoadLine() {
