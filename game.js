@@ -555,7 +555,7 @@ function drawTitle() {
 // ===== GAME =====
 function drawGame() {
   ctx.drawImage(images.clouds, 0, 20);
-  distantBuildings.forEach(b  => ctx.drawImage(b.image, b.x, b.y));
+  distantBuildings.forEach(b => ctx.drawImage(b.image, b.x, b.y));
   foregroundBuildings.forEach(b => ctx.drawImage(b.image, b.x, b.y));
 
   ctx.fillStyle = "#867e7c";
@@ -574,48 +574,46 @@ function drawGame() {
   ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
   ctx.fillRect(granny.x + 20, shadowY, 65, 4);
 
-// ===== SQUASH + STRETCH BOP =====
-const baseX = granny.x;
-const baseY = granny.feetY;
+  // ===== SQUASH + STRETCH BOP =====
+  const baseX = granny.x;
+  const baseY = granny.feetY;
 
-let scaleX = 1;
-let scaleY = 1;
-let strength = 0; // ✅ FIX: define upfront
+  let scaleX = 1;
+  let scaleY = 1;
+  let strength = 0;
 
-// Smooth pulse based on music
-if (audioUnlocked && !audio.game.paused && granny.state === "idle") {
-  const secondsPerBeat = 60 / BPM;
-  const t = audio.game.currentTime;
-  const phase = (t % secondsPerBeat) / secondsPerBeat;
+  if (audioUnlocked && !audio.game.paused && granny.state === "idle") {
+    const secondsPerBeat = 60 / BPM;
+    const t = audio.game.currentTime;
+    const phase = (t % secondsPerBeat) / secondsPerBeat;
 
-  const pulse = Math.sin(phase * Math.PI);
+    const pulse = Math.sin(phase * Math.PI);
 
-  const beatNumber = Math.floor(t / secondsPerBeat);
-  const isOnBeat = (beatNumber % 2 === 1);
+    const beatNumber = Math.floor(t / secondsPerBeat);
+    const isOnBeat = (beatNumber % 2 === 1);
 
-  strength = isOnBeat ? pulse : 0; // ✅ assign, don’t declare
+    strength = isOnBeat ? pulse : 0;
 
-  scaleY = 1 - 0.06 * strength;
-  scaleX = 1 + 0.06 * strength;
-}
+    scaleY = 1 - 0.06 * strength;
+    scaleX = 1 + 0.06 * strength;
+  }
 
-// Maintain foot position
-const drawWidth  = granny.width  * scaleX;
-const drawHeight = granny.height * scaleY;
+  const drawWidth  = granny.width  * scaleX;
+  const drawHeight = granny.height * scaleY;
 
-const footSink = 2 * strength;
+  const footSink = 2 * strength;
 
-const drawX = baseX - (drawWidth - granny.width) / 2;
-const drawY = baseY - drawHeight + footSink;
+  const drawX = baseX - (drawWidth - granny.width) / 2;
+  const drawY = baseY - drawHeight + footSink;
 
-const sx = granny.frame * granny.width;
+  const sx = granny.frame * granny.width;
 
-ctx.drawImage(
-  images.granny,
-  sx, 0, granny.width, granny.height,
-  drawX, drawY,
-  drawWidth, drawHeight
-);
+  ctx.drawImage(
+    images.granny,
+    sx, 0, granny.width, granny.height,
+    drawX, drawY,
+    drawWidth, drawHeight
+  );
 }
 
 // ===== ROAD LINE =====
