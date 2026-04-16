@@ -361,13 +361,7 @@ if (audioUnlocked && !audio.game.paused) {
   }
 else if (granny.state === "idle") {
   granny.grounded = true;
-
-  // Apply bop ONLY visually, timing comes from music
-  if (isBopping) {
-    granny.frame = 1;
-  } else {
-    granny.frame = 0;
-  }
+  granny.frame = 0; // always neutral frame
 }
 
   // Granny hitbox in world space
@@ -580,9 +574,49 @@ function drawGame() {
   ctx.fillStyle = `rgba(0,0,0,${shadowAlpha})`;
   ctx.fillRect(granny.x + 20, shadowY, 65, 4);
 
-  const drawY = granny.feetY - granny.height;
-  const sx    = granny.frame * granny.width;
-  ctx.drawImage(images.granny, sx, 0, granny.width, granny.height, granny.x, drawY, granny.width, granny.height);
+// ===== SQUASH + STRETCH BOP =====
+const baseX = granny.x;
+const baseY = granny.feetY;
+
+let scaleX = 1;
+let scaleY = 1;
+
+// Smooth pulse based on music
+if (audioUnlocked && !audio.game.paused && granny.state === "idle") {
+  const secondsPerBeat = 60 / BPM;
+  const t = audio.game.currentTime;
+  const phase = (t % secondsPerBeat) / secondsPerBeat;
+
+  // smooth 0→1→0 curve
+  const pulse = Math.sin(phase * Math.PI);
+
+  // apply ONLY on every other beat
+  const beatNumber = Math.floor(t / secondsPerBeat);
+  const isOnBeat = (beatNumber % 2 === 1);
+
+  const strength = isOnBeat ? pulse : 0;
+
+  scaleY = 1 - 0.06 * strength; // squash
+  scaleX = 1 + 0.06 * strength; // stretch
+}
+
+// Maintain foot position
+const drawWidth  = granny.width  * scaleX;
+const drawHeight = granny.height * scaleY;
+
+const footSink = 2 * strength;
+  
+const drawX = baseX - (drawWidth - granny.width) / 2;
+const drawY = baseY - drawHeight + footSink;
+
+const sx = granny.frame * granny.width;
+
+ctx.drawImage(
+  images.granny,
+  sx, 0, granny.width, granny.height,
+  drawX, drawY,
+  drawWidth, drawHeight
+);
 }
 
 // ===== ROAD LINE =====
