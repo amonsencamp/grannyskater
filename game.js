@@ -601,17 +601,16 @@ function drawGame() {
 
     strength = isOnBeat ? pulse : 0;
 
-    scaleY = 1 - 0.06 * strength;
-    scaleX = 1 + 0.06 * strength;
+    scaleY = 1 - 0.03 * strength;
+    scaleX = 1 + 0.02 * strength;
   }
 
   const drawWidth  = granny.width  * scaleX;
   const drawHeight = granny.height * scaleY;
 
-  const footSink = 2 * strength;
 
   const drawX = baseX - (drawWidth - granny.width) / 2;
-  const drawY = baseY - drawHeight + footSink;
+  const drawY = baseY - drawHeight;
 
   const sx = granny.frame * granny.width;
 
