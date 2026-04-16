@@ -290,22 +290,21 @@ function update() {
 
   if (gameState !== STATE.PLAYING) return;
 
-// ===== MUSIC-SYNCED BOUNCE (EVERY OTHER BEAT) =====
-let isBopping = false;
+  // ===== MUSIC-SYNCED BOUNCE =====
+  let isBopping = false;
 
-if (audioUnlocked && !audio.game.paused) {
-  const secondsPerBeat = 60 / BPM;
-  const t = audio.game.currentTime;
+  if (audioUnlocked && !audio.game.paused) {
+    const secondsPerBeat = 60 / BPM;
+    const t = audio.game.currentTime;
 
-  const beatPhase = (t % secondsPerBeat) / secondsPerBeat;
-  const beatNumber = Math.floor(t / secondsPerBeat);
+    const beatPhase = (t % secondsPerBeat) / secondsPerBeat;
+    const beatNumber = Math.floor(t / secondsPerBeat);
 
-  const isOnBeat = (beatNumber % 2 === 1); // every other beat
+    const isOnBeat = (beatNumber % 2 === 1);
+    isBopping = isOnBeat && beatPhase < BEAT_WINDOW;
+  }
 
-  isBopping = isOnBeat && beatPhase < BEAT_WINDOW;
-}
-
-  // Speed ramp: increase base speed every 2 seconds (120 frames at 60fps)
+  // Speed ramp
   speedTimer++;
   if (speedTimer > 120) {
     speedTimer = 0;
@@ -314,7 +313,6 @@ if (audioUnlocked && !audio.game.paused) {
   currentSpeed = baseSpeed;
 
   score++;
-
   granny.frameTimer++;
 
   // ===== GRANNY ANIMATION =====
@@ -359,60 +357,68 @@ if (audioUnlocked && !audio.game.paused) {
       }
     }
   }
-else if (granny.state === "idle") {
-  granny.grounded = true;
-  granny.frame = 0; // always neutral frame
-}
+  else if (granny.state === "idle") {
+    granny.grounded = true;
+    granny.frame = 0;
+  }
 
-  // Granny hitbox in world space
+  // Hitbox
   const grannyBox = {
-    x:      granny.x + GRANNY_HITBOX.x,
-    y:      (granny.feetY - granny.height) + GRANNY_HITBOX.y,
-    width:  GRANNY_HITBOX.width,
+    x: granny.x + GRANNY_HITBOX.x,
+    y: (granny.feetY - granny.height) + GRANNY_HITBOX.y,
+    width: GRANNY_HITBOX.width,
     height: GRANNY_HITBOX.height
   };
 
-  // Scroll buildings
-  distantBuildings.forEach(b  => b.x -= currentSpeed * 0.2);
+  // Scroll
+  distantBuildings.forEach(b => b.x -= currentSpeed * 0.2);
   foregroundBuildings.forEach(b => b.x -= currentSpeed);
 
-  // Recycle foreground buildings
+  // Recycle FG
   if (foregroundBuildings.length && foregroundBuildings[0].x + foregroundBuildings[0].image.width < 0) {
     foregroundBuildings.shift();
-    const img  = images["fg" + (Math.floor(Math.random() * 5) + 1)];
+    const img = images["fg" + (Math.floor(Math.random() * 5) + 1)];
     const last = foregroundBuildings[foregroundBuildings.length - 1];
-    foregroundBuildings.push({ image: img, x: last.x + last.image.width, y: ROAD_TOP - img.height });
+    foregroundBuildings.push({
+      image: img,
+      x: last.x + last.image.width,
+      y: ROAD_TOP - img.height
+    });
   }
 
-  // Recycle distant buildings
+  // Recycle BG
   if (distantBuildings.length && distantBuildings[0].x + distantBuildings[0].image.width < 0) {
     distantBuildings.shift();
-    const img  = images["bg" + (Math.floor(Math.random() * 5) + 1)];
+    const img = images["bg" + (Math.floor(Math.random() * 5) + 1)];
     const last = distantBuildings[distantBuildings.length - 1];
-    distantBuildings.push({ image: img, x: last.x + last.image.width, y: HEIGHT - STREET_HEIGHT - img.height - 40 });
+    distantBuildings.push({
+      image: img,
+      x: last.x + last.image.width,
+      y: HEIGHT - STREET_HEIGHT - img.height - 40
+    });
   }
 
-  // Spawn obstacles
+  // Obstacles
   obstacleTimer++;
   if (obstacleTimer > nextObstacleGap) {
     obstacleTimer = 0;
     nextObstacleGap = randomGap();
+
     const choice = obstacleFiles[Math.floor(Math.random() * obstacleFiles.length)];
     obstacles.push({
       x: WIDTH,
       y: GROUND_Y - choice.height,
-      width:  choice.width,
+      width: choice.width,
       height: choice.height,
-      name:   choice.name
+      name: choice.name
     });
   }
 
   obstacles.forEach(o => o.x -= currentSpeed);
 
-  // Quip cooldown tick
+  // Quips
   if (quipCooldown > 0) quipCooldown--;
 
-  // Near-miss: obstacle just passed granny while she was airborne
   if (quipCooldown === 0) {
     for (const o of obstacles) {
       const justPassed = o.x + o.width < granny.x && o.x + o.width > granny.x - currentSpeed * 2;
@@ -425,13 +431,14 @@ else if (granny.state === "idle") {
     }
   }
 
-  // Collision detection
+  // Collision
   for (const o of obstacles) {
     if (checkCollision(grannyBox, o)) {
       gameState = STATE.GAMEOVER;
       shakeFrames = SHAKE_DURATION;
       playSound("hit");
       startMusic("stop");
+
       if (score > highScore) {
         highScore = score;
         localStorage.setItem("grannyHighScore", highScore);
