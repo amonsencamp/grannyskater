@@ -46,7 +46,7 @@ let hasDoubleJumped = false;
 
 // Idle bounce
 const BPM = 166;
-const BEAT_WINDOW = 0.2; // % of beat where the "dip" happens (0.2 = 20%)
+const BEAT_WINDOW = 0.1; // % of beat where the "dip" happens (0.2 = 20%)
 
 // Images
 const images = {};
@@ -480,7 +480,7 @@ function drawScore() {
   const s  = String(Math.floor(score     / 60)).padStart(2, "0");
   const hs = String(Math.floor(highScore / 60)).padStart(2, "0");
 
-  const hiLabel  = "HI " + hs;
+  const hiLabel  = "HI SCORE " + hs;
   const scoreStr = s;
 
   // Right-align by computing pixel width and subtracting from right edge
@@ -601,7 +601,7 @@ function drawGame() {
 
     strength = isOnBeat ? pulse : 0;
 
-    scaleY = 1 - 0.03 * strength;
+    scaleY = 1 - 0.04 * strength;
     scaleX = 1;
   }
 
