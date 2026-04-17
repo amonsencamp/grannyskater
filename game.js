@@ -143,7 +143,7 @@ let lineOffset = 0;
 // ===== OBSTACLE CONFIG =====
 // Defined once; used for both image loading and spawning.
 const obstacleFiles = [
-  { name: "cone",    width: 25, height: 45, src: "assets/cone.png" },
+  { name: "cone",    width: 25, height: 42, src: "assets/cone.png" },
   { name: "manhole", width: 50, height: 17, src: "assets/manhole.png" },
   { name: "trash",   width: 40, height: 60, src: "assets/trash.png" }
 ];
